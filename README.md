@@ -19,8 +19,8 @@ jquery:<br>
 <br>
 <br>
 ## Data
-File element
- - file.birth: The timestamp indicating the last time the file status was changed.
- - file.ctime: The timestamp indicating the creation time of this file.
-Folder element
- - folder.birth: The timestamp indicating the last time the file status was changed.
+File element<br>
+ - file.birth: The timestamp indicating the last time the file status was changed.<br>
+ - file.ctime: The timestamp indicating the creation time of this file.<br><br>
+Folder element<br>
+ - folder.birth: The timestamp indicating the last time the file status was changed.<br>
