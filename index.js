@@ -3,19 +3,38 @@ const { url, URLSearchParams } = require('url');
 const fs = require('fs');
 const path = require('path');
 const port = process.argv[2] || 9000;
+const maxfilesize = 1073741000; //1GigaBytes-1000
+const mime = require('mime-types');
 /*
 	ANTA_API 
 */
-	
-	
 
 var folderlist = {};
+var settings = {};
+
+
+try
+{ 
+	settings = fs.readFileSync('server.cfg','utf8');
+}
+catch(e)
+{
+	
+}
+if(settings)
+{
+	folderlist = settings;
+	__log('info','Loaded Settings');
+}
+
+
 function __log(info,text)
 {
 	console.log('['+info+'] ' + text);
 }
 function syncafter(file, dir, url, res)
 {
+	//set settings.skin
 	fs.readFile('./skin/anta.html', (err, html) => {
 		if (err) {
 				res.statusCode = 404;
@@ -30,6 +49,7 @@ function syncafter(file, dir, url, res)
 			tmp.url = url;
 			var go = JSON.stringify(tmp)
 			//var resultBuffer = encoding.convert(go, 'ASCII', 'UTF-8');
+			//set div
 			res.write(`<div id="data"><div id="list" data-list='${go}'></div></div>`);
 			console.log('resource writed');
 			res.write(html);
@@ -37,15 +57,11 @@ function syncafter(file, dir, url, res)
 		}
 	});
 }
-
-var settings;
-var f = fs.readFile('file', 'utf8', function (err, data) {
-  if (!err) settings = JSON.parse(data);
-});
-if(settings)
+function response_end(response, statusCode, end)
 {
-	folderlist = settings;
-	__log('info','Loaded Settings');
+	//set settings.onend
+	response.statusCode = statusCode;
+	response.end(end);
 }
 
 let params;
@@ -72,19 +88,17 @@ const server = http.createServer(function (request, response)
 				if(file)
 				{
 					var address = path.join('./', file);
-					sendFile(address, response);
+					sendFile(request, address, response);
 				}
 				else
 				{
-					response.statusCode = 404;
-					response.end(`Error - No such file on resource!`);
+					response_end(response, 404, `Error - No such file on resource!`);
 					__log('error', ` No such file on resource! - ${request.connection.remoteAddress}`);
 				}
 			}
 			else
 			{
-				response.statusCode = 404;
-				response.end(`Error - No such file on resource!`);
+				response_end(response, 404, `Error - No such file on resource!`);
 				__log('error', ` No such file on resource! - ${request.connection.remoteAddress}`);
 			}
 		}
@@ -150,37 +164,54 @@ const server = http.createServer(function (request, response)
 							}
 							else if(vaild.isFile()) //is File?
 							{
-								sendFile(realAddress, response);
+								sendFile(request, realAddress, response);
 								__log('Network', `File Sent - ${realAddress} - ${request.connection.remoteAddress}`);
 							}
 							else //it's not vaild
 							{
-								response.statusCode = 404;
-								response.end(`Error - Not Vaild!`);
+								response_end(response, 404, `Error - Not Vaild!`);
 								__log('error', `Not Vaild - File/Folder was not vaild(Not a folder, Not a file) - ${request.connection.remoteAddress}`);
 							}
 						}
 						else
 						{
-							response.statusCode = 404;
-							response.end(`Error - Not Real Directory!`);
+							response_end(response, 404, `Error - Not Real Directory!`);
 							__log('error', `Not Real Directory - Given address was not exists - ${request.connection.remoteAddress}`);
 						}
 					});
 				}
 				else
 				{
-					response.statusCode = 404;
-					response.end(`Error - Not Real Directory!`);
+					response_end(response, 404, `Error - Not Real Directory!`);
 					__log('error', `Not Real Directory - Shared folder was not exist - ${request.connection.remoteAddress}`);
 				}
 			});
 		}
 		else 
 		{
-			response.statusCode = 404;
-			response.end(`Error - No such folder!`);
-			__log('error', `No such folder - It's not shared - ${request.connection.remoteAddress}`);
+			if(decodedURL==`/`)
+			{
+				var main = [];
+				let folderlist_length = folderlist.length;
+				for(var shown in folderlist)
+				{
+					var stats = fs.statSync(folderlist[shown]);
+					if(stats)
+					{
+						main.push({"name":shown, "birth": stats.birthtime, "ctime": stats.ctime});
+					}
+					else
+					{
+						main.push({"name":shown, "birth": "", "ctime": ""});
+					}
+				}
+				syncafter(null, main, '', response);
+			}
+			else
+			{
+				response_end(response, 404, `Error - No such folder!`);
+				__log('error', `No such folder - It's not shared - ${request.connection.remoteAddress}`);
+			}
 		}
 	}
 }).listen(parseInt(port));
@@ -188,51 +219,65 @@ __log('info', `Server listening on port ${port}`);
 
 
 
-function sendFile(address, response)
+function sendFile(request, address, response)
 { //https://stackoverflow.com/questions/16333790/node-js-quick-file-server-static-files-over-http
 	__log('dev',address);
 	var pathname = address;
 	// based on the URL path, extract the file extention. e.g. .js, .doc, ...
-	const ext = path.extname(pathname);
+	let ext = path.extname(pathname);
+	let type = mime.lookup(ext);
 	// maps file extention to MIME typere
-	const map = {
-		'.ico': 'image/x-icon',
-		'.html': 'text/html',
-		'.js': 'text/javascript',
-		'.json': 'application/json',
-		'.css': 'text/css',
-		'.png': 'image/png',
-		'.jpg': 'image/jpeg',
-		'.wav': 'audio/wav',
-		'.mp3': 'audio/mpeg',
-		'.svg': 'image/svg+xml',
-		'.pdf': 'application/pdf',
-		'.doc': 'application/msword'
-	};
 	
-	fs.exists(pathname, function (exist) {
-		if(!exist) {
-			// if the file is not found, return 404
-			response.statusCode = 404;
-			response.end(`Error : File ${pathname} not found!`);
-			return;
-		}
+	//set map
+	if(fs.existsSync(pathname))
+	{
+		let stat=fs.statSync(pathname)
+		let size = stat.size;
+		if(request.headers['range'])
+		{
+			let range = request.headers.range;
+			let parts = range.replace(/bytes=/, "").split("-");
+			let partialstart = parts[0];
+			let partialend = parts[1];
 
-		// if is a directory search for index file matching the extention
-		if (fs.statSync(pathname).isDirectory()) pathname += '/index' + ext;
-
-		// read file from file system
-		fs.readFile(pathname, function(err, data){
-			if(err){
-				response.statusCode = 500;
-				response.end(`Error : Error getting the file: ${err}.`);
-			} else {
-			// if the file is found, set Content-type and send data
-				response.setHeader('Content-type', map[ext] || 'text/plain' );
-				response.end(data);
+			let start = parseInt(partialstart, 10);
+			let end = partialend ? parseInt(partialend, 10) : size-1;
+			let chunksize = (end-start)+1;
+			console.log('RANGE: ' + start + ' - ' + end + ' = ' + chunksize);
+			try
+			{
+				let file = fs.createReadStream(pathname, {start: start, end: end});
+				response.writeHead(206, { 'Content-Range': 'bytes ' + start + '-' + end + '/' + size, 'Accept-Ranges': 'bytes', 'Content-Length': chunksize, 'Content-Type': (type) ? type : 'video/mp4'});
+				file.pipe(response);
 			}
-		});
-	});
+			catch(err)
+			{
+				response_end(response, 500, "Error while streaming file!");
+			}
+		}
+		else
+		{
+			try
+			{
+				response.writeHead(200, {
+					'Content-type': (type) ? type : null,
+					'Content-Length' : size,
+				});
+				fs.createReadStream(pathname).pipe(response);
+				console.log(size);
+			}
+			catch(err)
+			{
+				response_end(response, 500, "Error while sending file!");
+			}
+		}
+	}
+	else 
+	{
+		// if the file is not found, return 404
+		response_end(response, 404, `Error : File ${pathname} not found!`);
+		return;
+	}
 }
 
 
@@ -301,3 +346,43 @@ stdin.addListener("data", function(d) { //input
 		
 	}
  });
+ 
+ 
+ /*
+		var stat=fs.statSync(pathname)
+		if(stat.size > maxfilesize)
+		{
+			response_end(response, 501, `Error : File ${pathname} was up to 1 Gb!`);
+			return;
+		}
+		// if is a directory search for index file matching the extention
+		if (stat.isDirectory()) pathname += '/index' + ext;
+		
+		fs.readFile(pathname, function(err, data){
+			if(err){
+				response_end(response, 500, `Error : Error getting the file: ${err}.`);
+			} else {
+			// if the file is found, set Content-type and send data
+				response.setHeader('Content-type', map[ext] || 'text/plain' );
+				response.end(data);
+			}
+		});
+		
+		
+		const map = {
+		'.ico': 'image/x-icon',
+		'.html': 'text/html',
+		'.js': 'text/javascript',
+		'.json': 'application/json',
+		'.css': 'text/css',
+		'.png': 'image/png',
+		'.jpg': 'image/jpeg',
+		'.wav': 'audio/wav',
+		'.mp3': 'audio/mpeg',
+		'.svg': 'image/svg+xml',
+		'.pdf': 'application/pdf',
+		'.doc': 'application/msword',
+		'.mp4': 'video/mp4',
+		'.webm':''
+	};
+		*/
