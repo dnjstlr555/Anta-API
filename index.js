@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const port = process.argv[2] || 9000;
 const maxfilesize = 1073741000; //1GigaBytes-1000
-const mime = require('mime-types');
+const mime = require('mime-types'); //npm install mime-types
 /*
 	ANTA_API 
 */
@@ -15,7 +15,8 @@ var settings = {};
 
 try
 { 
-	settings = fs.readFileSync('server.cfg','utf8');
+	folderlist = fs.readFileSync('share.cfg','utf8');
+	settings = fs.readFileSync('settings.cfg','utf8');
 }
 catch(e)
 {
@@ -23,6 +24,7 @@ catch(e)
 }
 if(settings)
 {
+	
 	folderlist = settings;
 	__log('info','Loaded Settings');
 }
@@ -32,30 +34,36 @@ function __log(info,text)
 {
 	console.log('['+info+'] ' + text);
 }
+function write_skin(response, address)
+{
+	var skin;
+	try
+	{	
+		skin = fs.readFileSync(address); //'./skin/anta.html'
+	}
+	catch(err)
+	{
+		response_end(res, 501, "Error: Skin is not vaild"); 
+		throw new error('skin was not vaild');
+	}
+	response.write(skin);
+}
+
 function syncafter(file, dir, url, res)
 {
 	//set settings.skin
-	fs.readFile('./skin/anta.html', (err, html) => {
-		if (err) {
-				res.statusCode = 404;
-				res.end(`Error - No such file on resource!`);
-			__log('error','damn!'); 
-		} 
-		else
-		{
-			var tmp = new Object();
-			tmp.files = file;
-			tmp.directories = dir;
-			tmp.url = url;
-			var go = JSON.stringify(tmp)
-			//var resultBuffer = encoding.convert(go, 'ASCII', 'UTF-8');
-			//set div
-			res.write(`<div id="data"><div id="list" data-list='${go}'></div></div>`);
-			console.log('resource writed');
-			res.write(html);
-			res.end(); 
-		}
-	});
+	
+	var tmp = new Object();
+	tmp.files = file;
+	tmp.directories = dir;
+	tmp.url = url;
+	var go = JSON.stringify(tmp)
+	//var resultBuffer = encoding.convert(go, 'ASCII', 'UTF-8');
+	//set div
+	
+	res.write(`<div id='data'><div id='list' data-list='${go}'></div></div>`);
+	console.log('resource writed');
+	res.end(); 
 }
 function response_end(response, statusCode, end)
 {
@@ -69,7 +77,7 @@ const server = http.createServer(function (request, response)
 {
 	__log('Network', `${request.method} ${request.url} from ${request.connection.remoteAddress}`);
     //console.log('request ', request.url, ' from', request.connection.remoteAddress);
-	var decodedURL = decodeURI(request.url)
+	var decodedURL = decodeURI(request.url);
 	var rq = decodedURL.split('/');
 	var par = decodedURL.split('?');
 	params = new URLSearchParams(par[1]);
@@ -96,6 +104,19 @@ const server = http.createServer(function (request, response)
 					__log('error', ` No such file on resource! - ${request.connection.remoteAddress}`);
 				}
 			}
+			else if(data == "Convert-Subtitle")
+			{
+				var file = params.get('file');
+				if(file)
+				{
+					var address = path.join('./', file);
+				}
+				else
+				{
+					response_end(response, 404, `Error - No such file on resource!`);
+					__log('error', ` No such file on resource! - ${request.connection.remoteAddress}`);
+				}
+			}
 			else
 			{
 				response_end(response, 404, `Error - No such file on resource!`);
@@ -105,7 +126,6 @@ const server = http.createServer(function (request, response)
 	}
 	else
 	{
-	
 		if (folderlist[rq[1]]) //verify it's shared main folder
 		{
 			fs.exists(folderlist[rq[1]], (exists) => //main folder is exists?
@@ -132,7 +152,9 @@ const server = http.createServer(function (request, response)
 								{
 									if(!err)
 									{
-										var num=__files.length;
+										write_skin(response, './skin/anta.html');
+										
+										let num=__files.length;
 										for(var i=0; i<num; i++) 
 										{
 											var finalres = path.join(realAddress, __files[i]);
@@ -141,8 +163,8 @@ const server = http.createServer(function (request, response)
 											{
 												stats = fs.statSync(finalres);
 												//__files[i] = encodeURI(__files[i]);
-												__files[i].replace(`"`, '');
-												__files[i].replace(`'`,'');
+												__files[i] = __files[i].replace(/'/g, "&#39;");
+												__files[i] = __files[i].replace(/"/g, "&#34;");
 												if (stats.isDirectory())
 												{
 													
@@ -158,6 +180,8 @@ const server = http.createServer(function (request, response)
 												
 											}
 										}
+										decodedURL = decodedURL.replace(/'/g, `&#39;`);
+										decodedURL = decodedURL.replace(/"/g, `&#34;`);
 										syncafter(files, directories, decodedURL, response); //sync end of response
 									}
 								});
@@ -191,6 +215,7 @@ const server = http.createServer(function (request, response)
 		{
 			if(decodedURL==`/`)
 			{
+				write_skin(response, './skin/anta.html');
 				var main = [];
 				let folderlist_length = folderlist.length;
 				for(var shown in folderlist)
@@ -226,6 +251,7 @@ function sendFile(request, address, response)
 	// based on the URL path, extract the file extention. e.g. .js, .doc, ...
 	let ext = path.extname(pathname);
 	let type = mime.lookup(ext);
+	console.log(type);
 	// maps file extention to MIME typere
 	
 	//set map
@@ -247,7 +273,7 @@ function sendFile(request, address, response)
 			try
 			{
 				let file = fs.createReadStream(pathname, {start: start, end: end});
-				response.writeHead(206, { 'Content-Range': 'bytes ' + start + '-' + end + '/' + size, 'Accept-Ranges': 'bytes', 'Content-Length': chunksize, 'Content-Type': (type) ? type : 'video/mp4'});
+				response.writeHead(206, { 'Content-Range': 'bytes ' + start + '-' + end + '/' + size, 'Accept-Ranges': 'bytes', 'Content-Length': chunksize, 'Content-Type': (type) ? type : 'application/octet-stream'});
 				file.pipe(response);
 			}
 			catch(err)
