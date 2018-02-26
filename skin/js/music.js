@@ -52,12 +52,34 @@ function audio_init(source)
 	audio = document.createElement('audio');
 	audio.src = source;
 	audio.play();
+	
+	var audio_slider = doc.getElementById('range-val');
+	var audio_ischange = false;
 	audio.ontimeupdate = function(e)
 	{
+		if(!audio_ischange) audio_slider.value = audio.currentTime;
 		doc.getElementById('current-time').innerHTML = formatSeconds(Math.floor(audio.currentTime));
 	}
 	audio.onloadeddata = function(e)
 	{
 		doc.getElementById('overall').innerHTML = formatSeconds(Math.floor(audio.duration));
-	}
+		audio_slider.max = audio.duration;
+		audio_slider.oninput = function()
+		{
+			audio.pause();
+			audio_ischange = true;
+			doc.getElementById('current-time').innerHTML = formatSeconds(Math.floor(audio_slider.value));
+		}
+		audio_slider.onchange = function()
+		{
+			audio.play();
+			audio.currentTime = audio_slider.value;
+			audio_ischange = false;
+		}
+	} 
+}
+
+function audio_change(time)
+{
+	audio.currentTime = time;
 }
