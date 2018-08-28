@@ -1,5 +1,5 @@
 # Anta-API
-Aiming for high responsibility, high accessibility and staying fancy<br>
+Aiming for high responsibility, low accessibility and staying fancy<br>
 
 It provide files and folders to client using Node.js / Javascript.<br>
 
