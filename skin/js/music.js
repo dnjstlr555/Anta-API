@@ -27,9 +27,9 @@ function audio_init_wrap(SongName, SongArtist)
     <p id="current-time">0:46</p>
   </div>
   <div id="buttons">
-    <i class="fa fa-step-backward fa-3x"></i>
-    <i class="fa fa-pause fa-3x step"></i>
-    <i class="fa fa-step-forward fa-3x"></i>
+    <div class="fa fa-step-backward fa-3x"></i>
+    <div class="play" id='button_play' onclick=audio_pause_play(this);></i>
+    <div class="fa fa-step-forward fa-3x"></i>
   </div>
   <div id="total-time">
     <p id="overall">2:23</p>
@@ -76,10 +76,28 @@ function audio_init(source)
 			audio.currentTime = audio_slider.value;
 			audio_ischange = false;
 		}
-	} 
+	}
+	var play = doc.getElementById('button_play');
+	audio.onplay = function(e)
+	{
+		play.setAttribute('class', 'play pause');
+	}
+	audio.onpause = function(e)
+	{
+		play.setAttribute('class', 'play');
+	}
 }
 
-function audio_change(time)
+function audio_pause_play(element)
 {
-	audio.currentTime = time;
+	var isPause = element.classList.contains('pause');
+	element.setAttribute('class', isPause ? 'play' : 'play pause');
+	if(!isPause)
+	{
+		audio.play();
+	}
+	else
+	{
+		audio.pause();
+	}
 }

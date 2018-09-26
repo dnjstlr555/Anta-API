@@ -79,7 +79,8 @@ function listdata(data)
 		var dir_length = dirs.length;
 		for(i=0; i<dir_length; i++)
 		{
-			var name = dirs[i].name.replace("'", "&#39;");
+			//var name = dirs[i].name.replace("'", "&#39;");
+			var name = decodeURI(dirs[i].name);
 			var preview = `${resfix}skin/icon/ico_folder.png`;
 			var link = `${url}/${name}`;
 			var type = "folder";
@@ -107,11 +108,16 @@ function listdata(data)
 			if(!isNaN(A.name.split(".")[0]) && !isNaN(B.name.split(".")[0])) 
 			{
 				//alert( A[0].split(".")[0] - B[0].split(".")[0] ) 
-				return A.name.split(".")[0] - B.name.split(".")[0];
+				let temp = A.name.split(".")[0] - B.name.split(".")[0];
+				if(temp) return A.name.split(".")[0] - B.name.split(".")[0];
+				else 
+				{
+					console.log(`Same name`);
+					return A.name.split(".")[1].toLowerCase().localeCompare(B.name.split(".")[1].toLowerCase()); 
+				}
 			}
 			return A.name.split(".")[0].toLowerCase().localeCompare(B.name.split(".")[0].toLowerCase()); 
 		});
-		
 		const imgf = /\.(bmp|gif|jpe|jpg|jpeg|png)$/i;
 		const vidf = /\.(3g2|3gp|3gp2|3gpp|asf|avi|divx|flv|k3g|m1v|m2t|m2ts|m2v|m4v|mkv|mov|mp2v|mp4|mpv2|mpg|mpeg|ogm|ogv|qt|rmvb|tp|ts|webm|wm|wmv)$/i;
 		const audf = /\.(aac|aif|aifc|aiff|au|cda|fla|flac|kar|m4a|mid|midi|mka|mp1|mp2|mp3|mpa|mpc|oga|ogg|opus|snd|wav|wave|wma|wv)$/i;
@@ -119,6 +125,7 @@ function listdata(data)
 		const exef = /\.(exe|msi|msu|msp)$/i;
 		const isof = /\.(b5t|bin|bwt|cdi|img|iso|isz|lcd|mds|nrg|pdi|vcd)$/i;
 		const zipf = /\.(7z|ace|alz|arc|arj|b64|bh|bhx|bz|bz2|cab|ear|egg|enc|gz|ha|hqx|ice|lha|lzh|mim|pak|rar|tar|tbz|tbz2|tgz|uu|uue|war|xxe|z|zip|zoo)$/i;
+		const subf = /\.(ass|vtt|srt|lrc|sbv|smi|ssa|sub)$/i;
 		const caption = "";
 		
 		var file_length = files.length;
@@ -127,8 +134,8 @@ function listdata(data)
 		{
 			if(/^(pagefile\.sys|hiberfil\.sys|swapfile\.sys|desktop\.ini|thumbs\.db)$/i.test(files[i].name)) continue;
 			
-			var name = files[i].name.replace("'", "&#39;");
-			
+			//var name = files[i].name.replace("'", "&#39;");
+			var name = decodeURI(files[i].name);
 			var preview = `${resfix}skin/icon/ico_file.png`;
 			var link = `${url}/${name}`;
 			var type = "file";
@@ -169,21 +176,27 @@ function listdata(data)
 				preview = `${resfix}skin/icon/ico_zip.png`;
 				type = "zip";
 			}
+			else if(subf.test(name))
+			{
+				preview = `${resfix}skin/icon/ico_sub.png`;
+				type = "sub";
+				list_subtitle.push(name);
+			}
 			image_index_buf = (type=="image") ? `data-index=${image_index}` : null;
 			if(image_index_buf) image_index++;
 			buf +=
-			`<a id="element#${name}" class="element" data-type="${type}" data-link="${link}" title="${name}" ${image_index_buf} onclick='return handler(this);' href="${link}">` +
+			`<div id="element#${name}" class="element" data-type="${type}" data-link="${link}" title="${name}" ${image_index_buf} onclick='return handler(this);' href="${link}">` +
 				`<div id="highlight#${name}" class="highlight">` +
 					`<div id="content#${name}" class="content">` +
 						`<div id="el_img#${name}" class="el_img">` +
-							`<img id="view#${name}" class="el_view" data-src="${preview}">` +
+							`<img id="view#${name}" class="el_view" data-src="${preview}" src="${preview}">` +
 						`</div>` +
 						`<div id="el_name#${name}" class="el_name">` +
 							`${name}` +
 						`</div>` +
 					`</div>` +
 				`</div>` +
-			`</a>`;
+			`</div>`;
 		}
 	}
 	if(!buf) buf = `<div class="init">이 폴더는 비어 있습니다.</div>\n`;
@@ -192,7 +205,7 @@ function listdata(data)
 	
 	doc.getElementById("form").innerHTML = buf;
 	doc.body.className = doc.body.className.replace("progress", "");
-	var myLazyLoad = new LazyLoad();
+	//var myLazyLoad = new LazyLoad();
 	init_swiper();
 }
 
@@ -218,7 +231,7 @@ function handler(element)
 			break;
 		case "video":
 			wrap_slide("video");
-			wrap_video(link);
+			video_init(link, name);
 			break;
 		case "audio":
 			wrap_slide("audio");
@@ -234,6 +247,7 @@ function handler(element)
 
 function wrap_slide(type)
 {
+	console.log('wrap slied!');
 	var slider = doc.getElementById('wrap');
 	var isOpen = slider.classList.contains('slide-in');
     slider.setAttribute('class', isOpen ? 'slide-out' : 'slide-in');
@@ -255,7 +269,13 @@ function wrap_slide(type)
 		case "video":
 			if(isOpen)
 			{
-				plyr.get()[0].destroy();
+				
+				var videoElement = document.getElementById('wrap_video');
+				videoElement.pause();
+				videoElement.src =`${resfix}skin/blank.mp4`; // empty source
+				videoElement.load();
+				
+				player.destroy();
 			}
 			break;
 		case "settings":
@@ -294,3 +314,50 @@ function transition_fullscreen(element) //element : el_img
 	var img = element.getElementsByClassName('el_view')[0];
 	img.classList.add('full');
 }
+
+/*
+function dropHandler(ev) {
+  console.log('File(s) dropped');
+
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
+
+  if (ev.dataTransfer.items) {
+    // Use DataTransferItemList interface to access the file(s)
+    for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+      // If dropped items aren't files, reject them
+      if (ev.dataTransfer.items[i].kind === 'file') {
+        var file = ev.dataTransfer.items[i].getAsFile();
+        console.log('...() file[' + i + '].name = ' + file.name);
+      }
+    }
+  } else {
+    // Use DataTransfer interface to access the file(s)
+    for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+      console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+    }
+  } 
+  
+  // Pass event to removeDragData for cleanup
+  removeDragData(ev)
+}
+function dragOverHandler(ev) {
+  console.log('File(s) in drop zone'); 
+  doc.getElementById("article").className = (ev.type === 'dragover' ? 'show' : '');
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
+}
+
+function removeDragData(ev) {
+  console.log('Removing drag data')
+
+  if (ev.dataTransfer.items) {
+    // Use DataTransferItemList interface to remove the drag data
+    ev.dataTransfer.items.clear();
+  } else {
+    // Use DataTransfer interface to remove the drag data
+    ev.dataTransfer.clearData();
+  }
+}
+ ondrop="dropHandler(event);" ondragenter="dragOverHandler(event);" ondragleave="dragOverHandler(event);"
+*/
