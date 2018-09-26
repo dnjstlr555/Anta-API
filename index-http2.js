@@ -42,10 +42,10 @@ class log {
 			BgMagenta: "\x1b[45m",
 			BgCyan: "\x1b[46m",
 			BgWhite: "\x1b[47m",
-		}
+		};
   }
 	dev(text) {
-		console.log(`${this.color.BgWhite}~ DEV ${text}${this.color.Reset}`);
+		console.log(`${this.color.BgWhite}${this.color.Bright}~ DEV ${text}${this.color.Reset}`);
 	}
 	error(text) {
 		console.log(`${this.color.BgRed}${this.color.Bright}Ⅹ ERROR ${text}${this.color.Reset}`);
@@ -191,7 +191,7 @@ server.on('stream', (stream, headers) =>
 		q.error(err);
 		q.error('----------------------');
 	});
-	let Authority = headers[':authority']
+	let Authority = headers[':authority'];
 	let Path = decodeURI(headers[':path']);
 	let ParamTemp = Path.split('?');
 	
@@ -233,6 +233,7 @@ server.on('stream', (stream, headers) =>
 		var Address = address_toReal(Path);
 		if(Address)
 		{
+			q.dev(`entering access - ${Address}`);
 			fs.access(Address, fs.constants.F_OK, (err) => {
 				q.work(`${Address} - ${err ? 'Does not exist' : 'Exists'}`);
 				if(!err)
@@ -282,7 +283,7 @@ server.on('stream', (stream, headers) =>
 								Data.directories = directories;
 								Data.url = Path;
 								
-								Data = JSON.stringify(Data)
+								Data = JSON.stringify(Data);
 								stream.write(`<div id='data'><div id='list' data-list='${Data}'></div></div>`);
 								q.done('Data Writed');
 								stream.end();
@@ -300,8 +301,8 @@ server.on('stream', (stream, headers) =>
 					}
 					else if(ParentStat.isFile())
 					{
-						file_send(stream, headers, Address);
 						q.network(`Sending File... - ${Address}`,2);
+						file_send(stream, headers, Address);
 					}
 					else
 					{
@@ -370,97 +371,110 @@ q.info(`Server listening on port ${port}`);
 
 function file_send(stream, headers, address)
 {
-	let ext = path.extname(address);
-	let type = mime.lookup(ext);
-	
-	const stat = fs.statSync(address);
-	const fileSize = stat.size;
-	const range = headers.range;
-	
-	if (range) {
-		const parts = range.replace(/bytes=/, "").split("-")
-		const start = parseInt(parts[0], 10)
-		const end = parts[1] 
-		? parseInt(parts[1], 10)
-		: fileSize-1
-		const chunksize = (end-start)+1
-		const file = fs.createReadStream(address, {start, end})
-		const head = {
-			'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-			'Accept-Ranges': 'bytes',
-			'Content-Length': chunksize,
-			'Content-Type': (type) ? type : 'application/octet-stream',
-			':status': 206,
-		};
-		if(stream.destroyed)
+	fs.stat(address, (err, stat) =>
+	{
+		if(err)
 		{
-			q.warn(`${address} - stream destroyed and no longer use`);
+			q.warn(`error occured while sending a file! - ${err}`);
+			stream.respond({ ':status': 500});
+			stream.end(`Error occured while sending a file! : ${err}`);
 			return;
 		}
-		stream.respond(head);
-		file.pipe(stream);
-		stream.session.on('close', () => 
+		else
 		{
-			file.unpipe();
-			file.destroy();
-		});
-		stream.on('aborted', () => {
-			file.unpipe();
-			file.destroy();
-			q.warn(`${address} - connection aborted!`);
-		});
-		/*
-		stream.session.setTimeout(2000);
-		stream.session.on('timeout', () => 
-		{
-			file.unpipe();
-			file.destroy();
-			q.warn('session time outed and all stream destroied');
-		});
-		*/
-		file.on('end', () => {
-			q.done(`${address} - All the data in the file has been read`);
-		}).on('close', (err) => {
-			q.info(`${address} - Stream has been destroyed and file has been closed`);
-		});
-	}
-	else {
-		const head = {
-			'Content-Length': fileSize,
-			'Content-Type': (type) ? type : 'text/plain',
+			let ext = path.extname(address);
+			let type = mime.lookup(ext);
+			
+			//const stat = fs.statSync(address);
+			const fileSize = stat.size;
+			const range = headers.range;
+			
+			if (range) {
+				const parts = range.replace(/bytes=/, "").split("-")
+				const start = parseInt(parts[0], 10)
+				const end = parts[1] 
+				? parseInt(parts[1], 10)
+				: fileSize-1
+				const chunksize = (end-start)+1
+				const file = fs.createReadStream(address, {start, end})
+				const head = {
+					'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+					'Accept-Ranges': 'bytes',
+					'Content-Length': chunksize,
+					'Content-Type': (type) ? type : 'application/octet-stream',
+					':status': 206,
+				};
+				if(stream.destroyed)
+				{
+					q.warn(`${address} - stream destroyed and no longer use`);
+					return;
+				}
+				stream.respond(head);
+				file.pipe(stream);
+				stream.session.on('close', () => 
+				{
+					file.unpipe();
+					file.destroy();
+				});
+				stream.on('aborted', () => {
+					file.unpipe();
+					file.destroy();
+					q.warn(`${address} - connection aborted!`);
+				});
+				/*
+				stream.session.setTimeout(2000);
+				stream.session.on('timeout', () => 
+				{
+					file.unpipe();
+					file.destroy();
+					q.warn('session time outed and all stream destroied');
+				});
+				*/
+				file.on('end', () => {
+					q.done(`${address} - All the data in the file has been read`);
+				}).on('close', (err) => {
+					q.info(`${address} - Stream has been destroyed and file has been closed`);
+				});
+			}
+			else {
+				const head = {
+					'Content-Length': fileSize,
+					'Content-Type': (type) ? type : 'text/plain',
+				}
+				if(stream.destroyed)
+				{
+					q.warn(`${address} - stream destroyed and no longer use`);
+					return;
+				}
+				stream.respond(head);
+				const file = fs.createReadStream(address).pipe(stream)
+				stream.session.on('close', () => 
+				{
+					file.unpipe();
+					file.destroy();
+				});
+				stream.on('aborted', () => {
+					file.unpipe();
+					file.destroy();
+					q.warn(`${address} - connection aborted!`);
+				});
+				file.on('end', () => {
+					q.done(`${address} - All the data in the file has been read`);
+				}).on('close', (err) => {
+					q.info(`${address} - Stream has been destroyed and file has been closed`);
+				});
+				/*
+				stream.session.setTimeout(2000);
+				stream.session.on('timeout', () => 
+				{
+					file.unpipe();
+					file.destroy();
+					q.warn('session time outed and all stream destroied');
+				});
+				*/
+			}
 		}
-		if(stream.destroyed)
-		{
-			q.warn(`${address} - stream destroyed and no longer use`);
-			return;
-		}
-		stream.respond(head);
-		const file = fs.createReadStream(address).pipe(stream)
-		stream.session.on('close', () => 
-		{
-			file.unpipe();
-			file.destroy();
-		});
-		stream.on('aborted', () => {
-			file.unpipe();
-			file.destroy();
-			q.warn(`${address} - connection aborted!`);
-		});
-		file.on('end', () => {
-			q.done(`${address} - All the data in the file has been read`);
-		}).on('close', (err) => {
-			q.info(`${address} - Stream has been destroyed and file has been closed`);
-		});
-		/*
-		stream.session.setTimeout(2000);
-		stream.session.on('timeout', () => 
-		{
-			file.unpipe();
-			file.destroy();
-			q.warn('session time outed and all stream destroied');
-		});
-		*/
-	}
+	});
 }
 
 
@@ -471,7 +485,7 @@ command
 
 
 var stdin = process.openStdin();
-stdin.addListener("data", function(d) { //input
+stdin.addListener("data", (d) => { //input
 	var get = d.toString().trim().split(" ");
 	if (get[0] == "add")
 		{
