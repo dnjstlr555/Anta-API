@@ -39,7 +39,7 @@ function video_init(view, name)
 	
 	player = new Plyr(player_element,
 	{
-		iconUrl: "?action=Resource&file=skin/css/plyr.svg", 
+		iconUrl: "?action=Resource&file=/css/plyr.svg", 
 		seekTime: 3,
 		disableContextMenu: false,
 		tooltips: {

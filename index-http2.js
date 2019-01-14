@@ -143,26 +143,28 @@ q.done('Done - miscellaneous');
 function address_toReal(Address)
 {
 	q.dev(Address);
-	
-	let Path = Address.split('/');
-	let Parent = Shared_Folder[Path[1]];
-	if(Parent)
+	if(Address)
 	{
-		if(fs.existsSync(Parent))
+		let Path = Address.split('/');
+		let Parent = Shared_Folder[Path[1]];
+		if(Parent)
 		{
-			var Real_Address = Parent; //join rest folder
-			let Real_Address_length = Path.length;
-			for(var rest=2; rest<Real_Address_length; rest++) 
+			if(fs.existsSync(Parent))
 			{
-				if(Path[rest]) Real_Address = path.join(Real_Address, Path[rest]);
+				var Real_Address = Parent; //join rest folder
+				let Real_Address_length = Path.length;
+				for(var rest=2; rest<Real_Address_length; rest++) 
+				{
+					if(Path[rest]) Real_Address = path.join(Real_Address, Path[rest]);
+				}
+				return Real_Address;
 			}
-			return Real_Address;
-		}
-		else
-		{
-			q.error(`NULL ADDRESS! ${Path}`);
-			return null;
-			//throw new Error('parent not exists');
+			else
+			{
+				q.error(`NULL ADDRESS! ${Path}`);
+				return null;
+				//throw new Error('parent not exists');
+			}
 		}
 	}
 	return null;
@@ -210,7 +212,7 @@ server.on('stream', (stream, headers) =>
 				var file = Param.get('file');
 				if(file)
 				{
-					var address = path.join('./', file);
+					var address = path.join('./skin', file);
 					file_send(stream, headers, address);
 				}
 				else
@@ -218,6 +220,107 @@ server.on('stream', (stream, headers) =>
 					stream.respond({ ':status': 404});
 					stream.end(`Error - No such file on resource!`);
 					q.warn(`${file} - Null Resource Parameter Arguments`);
+				}
+			}
+			else if(data == "Convert-Subtitle")
+			{
+				console.log("=======[We are In Convert]======");
+				var file = Param.get('file');
+				if(file)
+				{
+					//file = file.split(`/`);
+					var real_address = address_toReal(file);
+					if(real_address)
+					{
+						fs.stat(real_address, (err, stats) => {
+							if(!err) {
+								if(stats.isDirectory())
+								{
+									stream.respond({ ':status': 500});
+									stream.end(`Error - It was not a file but directory. wait what?`);
+									q.warn(`${file} - Error - Lol it was not a file. moron`);
+								}
+								else if(stats.isFile())
+								{
+									var tmp = fs.readFileSync(real_address);
+									var sub;
+									//var encode = jschardet.detect(sub);
+									//console.log(encode);
+									var encode2 =  chardet.detect(tmp);
+									console.log("sec " + encode2);
+									if(iconv.encodingExists(encode2))
+									{
+										sub = iconv.decode(tmp, encode2); //encode.encoding
+									}
+									else
+									{
+										stream.respond({ ':status': 501});
+										stream.end(`Convert Error - Not supported encode type it was.`);
+										q.warn(`${file} - Convert Error - Not supported encode type it was.`);
+										return;
+										/*
+										var iconv = new Iconv(encode2, 'utf-8//TRANSLIT//IGNORE');
+										try{
+										sub = iconv.convert(tmp);
+										}
+										catch(e){
+											response_end(response,`convert error: ${e}`, 500);
+										}
+										*/
+									}
+									var sub_converted;
+									try {
+										sub_converted = subsrt.convert(sub, { format: 'vtt' });
+										let type = mime.lookup('vtt');
+										if(sub_converted)
+										{
+											stream.respond({
+												':status': 200,
+												'Content-type': (type) ? type : null,
+												'charset':'utf-8',
+											});
+											stream.end(sub_converted);
+										}
+										else
+										{
+											stream.respond({ ':status': 500});
+											stream.end(`Error - ${err} / Unexpected Error Occured`);
+											q.warn(`${file} - Convert Error ${err} / Unexpected Error Occured`);
+										}
+									}
+									catch(err) {
+										stream.respond({ ':status': 500});
+										stream.end(`Error - ${err} / Unexpected Error Occured`);
+										q.warn(`${file} - Convert Error ${err} / Unexpected Error Occured`);
+									}
+								}
+								else
+								{
+									stream.respond({ ':status': 500});
+									stream.end(`Error - It's all good but it was unexcepted file type what the hell is it?`);
+									q.warn(`${file} - was not valid and unexpected file type it was.`);
+								}
+							}
+							else
+							{
+								stream.respond({ ':status': 404});
+								stream.end(`Error - It's shared but not real file`);
+								q.warn(`${file} - was not valid and not reachable`);
+							}
+						});
+					}
+					else
+					{
+						stream.respond({ ':status': 404});
+						stream.end(`Error - It's not shared`);
+						q.warn(`${file} - was forbidden`);
+					}
+				}
+				else
+				{
+					stream.respond({ ':status': 404});
+					stream.end(`Error - No such file on resource! `);
+					q.warn(`There was no parameter on converting files`);
 				}
 			}
 			else
@@ -230,7 +333,10 @@ server.on('stream', (stream, headers) =>
 	}
 	else
 	{
-		var Address = address_toReal(Path);
+		var encoded = Path;
+		encoded = encoded.replace(`&#39;`, `'`);
+		encoded = encoded.replace(`&#34;`, `"`);
+		var Address = address_toReal(encoded);
 		if(Address)
 		{
 			q.dev(`entering access - ${Address}`);
@@ -258,6 +364,8 @@ server.on('stream', (stream, headers) =>
 									{
 										file_stats = fs.statSync(InstanceAddress);
 										__files[i] = encodeURI(__files[i]);
+										__files[i] = __files[i].replace(/'/g, `&#39;`);
+										__files[i] = __files[i].replace(/"/g, `&#34;`);
 										//__files[i] = __files[i].replace(/'/g, "&#39;");
 										//__files[i] = __files[i].replace(/"/g, "&#34;");
 										if (file_stats.isDirectory())
@@ -274,8 +382,8 @@ server.on('stream', (stream, headers) =>
 										q.warn(`Error while pushing directory - ${err}`);
 									}
 								}
-								//Path = Path.replace(/'/g, `&#39;`);
-								//Path = Path.replace(/"/g, `&#34;`);
+								Path = Path.replace(/'/g, `&#39;`);
+								Path = Path.replace(/"/g, `&#34;`);
 								Path = encodeURI(Path);
 								
 								var Data = {};
@@ -302,6 +410,9 @@ server.on('stream', (stream, headers) =>
 					else if(ParentStat.isFile())
 					{
 						q.network(`Sending File... - ${Address}`,2);
+						let path = Address;
+						Path = Path.replace(`&#39;`, `'`);
+						Path = Path.replace(`&#34;`, `"`);
 						file_send(stream, headers, Address);
 					}
 					else
@@ -331,14 +442,20 @@ server.on('stream', (stream, headers) =>
 				let shared_folder_length = Shared_Folder.length;
 				for(var folder in Shared_Folder)
 				{
-					var stats = fs.statSync(Shared_Folder[folder]);
-					if(stats)
-					{
-						main.push({"name":folder, "birth": stats.birthtime, "ctime": stats.ctime});
+					try{
+						var stats = fs.statSync(Shared_Folder[folder]);
+						if(stats)
+						{
+							main.push({"name":folder, "birth": stats.birthtime, "ctime": stats.ctime});
+						}
+						else
+						{
+							main.push({"name":folder, "birth": "", "ctime": ""});
+							q.error(`unable to stat shared folder - ${folder}`);
+						}
 					}
-					else
-					{
-						main.push({"name":folder, "birth": "", "ctime": ""});
+					catch(err) {
+						q.error(`unable to stat shared folder in try level - ${folder}, ${err}`);
 					}
 				}
 				var data = {};

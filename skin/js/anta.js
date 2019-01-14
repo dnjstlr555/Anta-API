@@ -6,8 +6,8 @@ function formatSeconds(seconds) {
 
 const __info =
 `
-ANTA - Being develop
-Made by Hisman Yosika
+ANTA alpha
+Present by node.js
 `
 
 const resfix = "?action=Resource&file=";
@@ -43,7 +43,7 @@ function work()
 	{
 		if(doc.getElementById('list'))
 		{
-			console.log("Found Element");
+			console.log("Element Found");
 			let element = doc.getElementById('list').getAttribute('data-list');
 			let json = JSON.parse(element);
 			data.setData(json);
@@ -61,8 +61,14 @@ function listdata(data)
 	var files = data.files;
 	var dirs = data.directories;
 	var url = data.url;
-	
+	//doc.title = `ANTA - ${decodeURI(data.url)}`;
 	var buf = "";
+	
+	var file_length = (files) ? files.length : 0;
+	var dir_length = (dirs) ? dirs.length : 0;
+	var total =  dir_length + file_length;
+	var count = 0;
+	
 	// 디렉터리
 	if(dirs)
 	{
@@ -76,17 +82,24 @@ function listdata(data)
 		});
 		
 		var i;
-		var dir_length = dirs.length;
+		//declear of dir_length variable is below
 		for(i=0; i<dir_length; i++)
 		{
+			count += 1;
 			//var name = dirs[i].name.replace("'", "&#39;");
 			var name = decodeURI(dirs[i].name);
-			var preview = `${resfix}skin/icon/ico_folder.png`;
+			var preview = `${resfix}/icon/ico_folder.png`;
 			var link = `${url}/${name}`;
 			var type = "folder";
-			
+			var pushing = "";
+			if(i>=dir_length-1) {
+				console.log(`reached max in folder, ${count} cnt of ${dir_length} and ${total} total`);
+				if(count>=total) {
+					pushing = " push";
+				}
+			}
 			buf +=
-			`<a id="element#${name}" class="element" data-type="${type}" data-link="${link}" title="${name}" onclick='return handler(this);' href="${link}">` +
+			`<a id="element#${name}" class="element${pushing}" data-type="${type}" data-link="${link}" title="${name}" onclick='return handler(this);' href="${link}">` +
 				`<div id="highlight#${name}" class="highlight">` +
 					`<div id="content#${name}" class="content">` +
 						`<div id="el_img#${name}" class="el_img">` +
@@ -128,15 +141,15 @@ function listdata(data)
 		const subf = /\.(ass|vtt|srt|lrc|sbv|smi|ssa|sub)$/i;
 		const caption = "";
 		
-		var file_length = files.length;
 		var image_index = 0;
 		for(i=0; i<file_length; i++)
 		{
+			count += 1;
 			if(/^(pagefile\.sys|hiberfil\.sys|swapfile\.sys|desktop\.ini|thumbs\.db)$/i.test(files[i].name)) continue;
 			
 			//var name = files[i].name.replace("'", "&#39;");
 			var name = decodeURI(files[i].name);
-			var preview = `${resfix}skin/icon/ico_file.png`;
+			var preview = `${resfix}/icon/ico_file.png`;
 			var link = `${url}/${name}`;
 			var type = "file";
 			
@@ -148,44 +161,51 @@ function listdata(data)
 			}
 			else if(vidf.test(name))
 			{
-				preview = `${resfix}skin/icon/ico_video.png`;
+				preview = `${resfix}/icon/ico_video.png`;
 				type = "video";
 			}
 			else if(audf.test(name))
 			{
-				preview = `${resfix}skin/icon/ico_audio.png`;
+				preview = `${resfix}/icon/ico_audio.png`;
 				type = "audio";
 			}
 			else if(txtf.test(name))
 			{
-				preview = `${resfix}skin/icon/ico_text.png`;
+				preview = `${resfix}/icon/ico_text.png`;
 				type = "text";
 			}
 			else if(exef.test(name))
 			{
-				preview = `${resfix}skin/icon/ico_exe.png`;
+				preview = `${resfix}/icon/ico_exe.png`;
 				type = "execute";
 			}
 			else if(isof.test(name))
 			{
-				preview = `${resfix}skin/icon/ico_iso.png`;
+				preview = `${resfix}/icon/ico_iso.png`;
 				type = "disk";
 			}
 			else if(zipf.test(name))
 			{
-				preview = `${resfix}skin/icon/ico_zip.png`;
+				preview = `${resfix}/icon/ico_zip.png`;
 				type = "zip";
 			}
 			else if(subf.test(name))
 			{
-				preview = `${resfix}skin/icon/ico_sub.png`;
+				preview = `${resfix}/icon/ico_sub.png`;
 				type = "sub";
 				list_subtitle.push(name);
 			}
 			image_index_buf = (type=="image") ? `data-index=${image_index}` : null;
 			if(image_index_buf) image_index++;
+			var pushing = "";
+			if(i>=file_length-1) {
+				console.log(`reached max in file, ${count} cnt of ${file_length} and ${total} total`);
+				if(count>=total) {
+					pushing = " push";
+				}
+			}
 			buf +=
-			`<div id="element#${name}" class="element" data-type="${type}" data-link="${link}" title="${name}" ${image_index_buf} onclick='return handler(this);' href="${link}">` +
+			`<div id="element#${name}" class="element${pushing}" data-type="${type}" data-link="${link}" title="${name}" ${image_index_buf} onclick='return handler(this);' href="${link}">` +
 				`<div id="highlight#${name}" class="highlight">` +
 					`<div id="content#${name}" class="content">` +
 						`<div id="el_img#${name}" class="el_img">` +
@@ -272,7 +292,7 @@ function wrap_slide(type)
 				
 				var videoElement = document.getElementById('wrap_video');
 				videoElement.pause();
-				videoElement.src =`${resfix}skin/blank.mp4`; // empty source
+				videoElement.src =`${resfix}/blank.mp4`; // empty source
 				videoElement.load();
 				
 				player.destroy();
