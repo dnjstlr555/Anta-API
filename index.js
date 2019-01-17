@@ -10,7 +10,7 @@ const maxfilesize = 1073741000; //1GigaBytes-1000
 const mime = require('mime-types'); //npm install mime-types
 const subsrt = require('./subsrt.js');
 const iconv = require('iconv-lite');
-var auth = require('http-auth');
+//var auth = require('http-auth');
 //const detectCharacterEncoding = require('detect-character-encoding');
 var chardet = require('chardet');
 class log {
@@ -93,11 +93,12 @@ class log {
 }
 
 let q = new log();
-
+/*
 var basic = auth.basic({
     realm: "Simon Area.",
     file: __dirname + "/pw.htpasswd" // gevorg:gpass, Sarah:testpass ...
 });
+*/
 const server = http2.createSecureServer({
   key: fs.readFileSync('self.key'),
   cert: fs.readFileSync('self.crt')
