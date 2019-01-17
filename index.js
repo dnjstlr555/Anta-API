@@ -9,7 +9,6 @@ const port = process.argv[2] || 9000;
 const maxfilesize = 1073741000; //1GigaBytes-1000
 const mime = require('mime-types'); //npm install mime-types
 const subsrt = require('./subsrt.js');
-const jschardet = require('./jschardet.js');
 const iconv = require('iconv-lite');
 var auth = require('http-auth');
 //const detectCharacterEncoding = require('detect-character-encoding');
@@ -180,7 +179,7 @@ server.on('sessionError', (err, a) =>
 	q.error('Session Error Occured!');
 	q.error('----------------------');
 	q.error(err);
-	q.error(`${JSON.stringify(a)}`);
+	console.table(err);
 	q.error('----------------------');
 });
 
@@ -481,7 +480,7 @@ server.on('error', (err) => {
 	q.error('Error occured in server!');
 	q.error('----------------------');
 	q.error(err);
-	console.error(err)
+	console.table(err);
 	q.error('----------------------');
 });
 q.info(`Server listening on port ${port}`);
@@ -499,96 +498,127 @@ function file_send(stream, headers, address)
 		}
 		else
 		{
-			let ext = path.extname(address);
-			let type = mime.lookup(ext);
-			
-			//const stat = fs.statSync(address);
-			const fileSize = stat.size;
-			const range = headers.range;
-			
-			if (range) {
-				const parts = range.replace(/bytes=/, "").split("-")
-				const start = parseInt(parts[0], 10)
-				const end = parts[1] 
-				? parseInt(parts[1], 10)
-				: fileSize-1
-				const chunksize = (end-start)+1
-				const file = fs.createReadStream(address, {start, end})
-				const head = {
-					'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-					'Accept-Ranges': 'bytes',
-					'Content-Length': chunksize,
-					'Content-Type': (type) ? type : 'application/octet-stream',
-					':status': 206,
-				};
-				if(stream.destroyed)
-				{
-					q.warn(`${address} - stream destroyed and no longer use`);
-					return;
+			try {
+				let ext = path.extname(address);
+				let type = mime.lookup(ext);
+				
+				//const stat = fs.statSync(address);
+				const fileSize = stat.size;
+				const range = headers.range;
+				
+				if (range) {
+					const parts = range.replace(/bytes=/, "").split("-")
+					const start = parseInt(parts[0], 10)
+					const end = parts[1] 
+					? parseInt(parts[1], 10)
+					: fileSize-1
+					const chunksize = (end-start)+1
+					const file = fs.createReadStream(address, {start, end})
+					const head = {
+						'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+						'Accept-Ranges': 'bytes',
+						'Content-Length': chunksize,
+						'Content-Type': (type) ? type : 'application/octet-stream',
+						':status': 206,
+					};
+					if(stream.destroyed)
+					{
+						q.warn(`${address} - stream destroyed and no longer use`);
+						return;
+					}
+					stream.respond(head);
+					file.pipe(stream);
+					var destroied = false;
+					stream.session.on('close', () => 
+					{
+						if(!destroied) {
+							file.unpipe();
+							file.destroy();
+							destroied = true;
+						}
+						else {
+							q.warn(`${address} already destroied`);
+						}
+					});
+					stream.on('aborted', () => {
+						q.warn(`${address} - connection aborted!`);
+						if(!destroied) {
+							file.unpipe();
+							file.destroy();
+							destroied = true;
+						}
+						else {
+							q.warn(`${address} already destroied`);
+						}
+					});
+					/*
+					stream.session.setTimeout(2000);
+					stream.session.on('timeout', () => 
+					{
+						file.unpipe();
+						file.destroy();
+						q.warn('session time outed and all stream destroied');
+					});
+					*/
+					file.on('end', () => {
+						q.done(`${address} - All the data in the file has been read`);
+					}).on('close', (err) => {
+						q.info(`${address} - Stream has been destroyed and file has been closed`);
+					});
 				}
-				stream.respond(head);
-				file.pipe(stream);
-				stream.session.on('close', () => 
-				{
-					file.unpipe();
-					file.destroy();
-				});
-				stream.on('aborted', () => {
-					file.unpipe();
-					file.destroy();
-					q.warn(`${address} - connection aborted!`);
-				});
-				/*
-				stream.session.setTimeout(2000);
-				stream.session.on('timeout', () => 
-				{
-					file.unpipe();
-					file.destroy();
-					q.warn('session time outed and all stream destroied');
-				});
-				*/
-				file.on('end', () => {
-					q.done(`${address} - All the data in the file has been read`);
-				}).on('close', (err) => {
-					q.info(`${address} - Stream has been destroyed and file has been closed`);
-				});
+				else {
+					const head = {
+						'Content-Length': fileSize,
+						'Content-Type': (type) ? type : 'text/plain',
+					}
+					if(stream.destroyed)
+					{
+						q.warn(`${address} - stream destroyed and no longer use`);
+						return;
+					}
+					stream.respond(head);
+					const file = fs.createReadStream(address).pipe(stream)
+					var destroied = false;
+					stream.session.on('close', () => 
+					{
+						if(!destroied) {
+							file.unpipe();
+							file.destroy();
+							destroied = true;
+						}
+						else {
+							q.warn(`${address} already destroied`);
+						}
+					});
+					stream.on('aborted', () => {
+						if(!destroied) {
+							file.unpipe();
+							file.destroy();
+							destroied = true;
+						}
+						else {
+							q.warn(`${address} already destroied`);
+						}
+						q.warn(`${address} - connection aborted!`);
+					});
+					file.on('end', () => {
+						q.done(`${address} - All the data in the file has been read`);
+					}).on('close', (err) => {
+						q.info(`${address} - Stream has been destroyed and file has been closed`);
+					});
+					/*
+					stream.session.setTimeout(2000);
+					stream.session.on('timeout', () => 
+					{
+						file.unpipe();
+						file.destroy();
+						q.warn('session time outed and all stream destroied');
+					});
+					*/
+				}
 			}
-			else {
-				const head = {
-					'Content-Length': fileSize,
-					'Content-Type': (type) ? type : 'text/plain',
-				}
-				if(stream.destroyed)
-				{
-					q.warn(`${address} - stream destroyed and no longer use`);
-					return;
-				}
-				stream.respond(head);
-				const file = fs.createReadStream(address).pipe(stream)
-				stream.session.on('close', () => 
-				{
-					file.unpipe();
-					file.destroy();
-				});
-				stream.on('aborted', () => {
-					file.unpipe();
-					file.destroy();
-					q.warn(`${address} - connection aborted!`);
-				});
-				file.on('end', () => {
-					q.done(`${address} - All the data in the file has been read`);
-				}).on('close', (err) => {
-					q.info(`${address} - Stream has been destroyed and file has been closed`);
-				});
-				/*
-				stream.session.setTimeout(2000);
-				stream.session.on('timeout', () => 
-				{
-					file.unpipe();
-					file.destroy();
-					q.warn('session time outed and all stream destroied');
-				});
-				*/
+			catch(err) {
+				q.error(`unknown error while sending files! ${err}`);
 			}
 		}
 	});
