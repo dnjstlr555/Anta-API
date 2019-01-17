@@ -6,7 +6,8 @@ const port = process.argv[2] || 9000;
 const maxfilesize = 1073741000; //1GigaBytes-1000
 const mime = require('mime-types'); //npm install mime-types
 /*
-	ANTA_API 
+	ANTA_API legacy
+	There will be no more support.
 */
 
 var folderlist = {};
