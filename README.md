@@ -1,26 +1,10 @@
-# Anta-API
-Aiming for high responsibility, low accessibility and staying fancy<br>
+# Anta API
+Anta API is lightweight network storage service. It transfers files via http2 protocol using node.js without any additional devices.
 
-It provide files and folders to client using Node.js / Javascript.<br>
+# How to use
+Run <code>node index.js</code>
 
-# API
-## Get Started
-Built-in:<br>
-<code>
-  var data = JSON.parse(document.getElementById('list').getAttribute('data-list'));<br>
-  console.log(&#96;files:${data.files} directories: ${data.directories} request-url(decoded): ${data.url}&#96;);<br>
-</code>
-
-jquery:<br>
-<code>
-  var data = $('#list').data('list');
-  console.log(&#96;files:${data.files} directories: ${data.directories} request-url(decoded): ${data.url}&#96;); <br>
-</code>
-<br>
-<br>
-## Data
-### File element
- - file.birth: The timestamp indicating the last time the file status was changed.<br>
- - file.ctime: The timestamp indicating the creation time of this file.<br><br>
-### Folder element
- - folder.birth: The timestamp indicating the last time the file status was changed.<br>
+# Commands
+  add **(Real address of the folder you wish to share)** **(Fake name)** - Add fake named folder in shared folder list, the folder and its sub items will be accessible.<br><br>
+  del **(Fake name)** - Delete fake named folder in shared folder list.<br><br>
+  sav - Save current shared folder list.<br><br>
