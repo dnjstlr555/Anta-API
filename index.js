@@ -1,104 +1,18 @@
 console.log('Initializing - Loading Modules');
 
-const http = require('http');
+const port = process.argv[2] || 9000;
+
 const http2 = require('http2');
 const { url, URLSearchParams } = require('url');
 const fs = require('fs');
 const path = require('path');
-const port = process.argv[2] || 9000;
-const maxfilesize = 1073741000; //1GigaBytes-1000
-const mime = require('mime-types'); //npm install mime-types
-const subsrt = require('./subsrt.js');
-const iconv = require('iconv-lite');
-//var auth = require('http-auth');
-//const detectCharacterEncoding = require('detect-character-encoding');
-var chardet = require('chardet');
-class log {
-	constructor() {
-		this.color = {
-			Reset: "\x1b[0m",
-			Bright: "\x1b[1m",
-			Dim: "\x1b[2m",
-			Underscore: "\x1b[4m",
-			Blink: "\x1b[5m",
-			Reverse: "\x1b[7m",
-			Hidden: "\x1b[8m",
-
-			FgBlack: "\x1b[30m",
-			FgRed: "\x1b[31m",
-			FgGreen: "\x1b[32m",
-			FgYellow: "\x1b[33m",
-			FgBlue: "\x1b[34m",
-			FgMagenta: "\x1b[35m",
-			FgCyan: "\x1b[36m",
-			FgWhite: "\x1b[37m",
-
-			BgBlack: "\x1b[40m",
-			BgRed: "\x1b[41m",
-			BgGreen: "\x1b[42m",
-			BgYellow: "\x1b[43m",
-			BgBlue: "\x1b[44m",
-			BgMagenta: "\x1b[45m",
-			BgCyan: "\x1b[46m",
-			BgWhite: "\x1b[47m",
-		};
-  }
-	dev(text) {
-		console.log(`${this.color.BgWhite}${this.color.Bright}~ DEV ${text}${this.color.Reset}`);
-	}
-	error(text) {
-		console.log(`${this.color.BgRed}${this.color.Bright}Ⅹ ERROR ${text}${this.color.Reset}`);
-	}
-	
-	warn(text) {
-		console.log(`${this.color.FgYellow}${this.color.Bright}※ WARN ${text}${this.color.Reset}`);
-	}
-	
-	info(text) {
-		console.log(`${this.color.Bright}${this.color.BgCyan}ⅰ info${this.color.Reset} ${text}`);
-	}
-	work(text) {
-		console.log(`${this.color.Bright}${this.color.FgYellow}♪ Working${this.color.Reset} ${text}`);
-	}
-	done(text) {
-		console.log(`${this.color.Bright}${this.color.FgCyan}√ done${this.color.Reset} ${text}`);
-	}
-	
-	network(text, symbol) {
-		var emoji = "…";
-		if(symbol)
-		{
-			switch(typeof symbol)
-			{
-				case "string":
-					emoji = symbol;
-					break;
-				case "number":
-					switch(symbol)
-					{
-						case 1:
-							emoji = "→"; //inbound
-							break;
-						case 2:
-							emoji = "←"; //outbound
-							break;
-					}
-					break;
-				default:
-					emoji = "…";
-			}
-		}
-		console.log(`${this.color.Bright}${this.color.BgBlack}${emoji}${this.color.Reset}${this.color.BgBlack}${this.color.Reverse} Network${this.color.Reset} ${text}`);
-	}
-}
-
+const mime = require('mime-types');
+const subsrt = require('./subsrt.js'); //use modified subsrt library
+const iconv = require('iconv-lite'); //for detecting encoding types of given files
+const chardet = require('chardet');
+const log = require('./lib/log.js');
 let q = new log();
-/*
-var basic = auth.basic({
-    realm: "Simon Area.",
-    file: __dirname + "/pw.htpasswd" // gevorg:gpass, Sarah:testpass ...
-});
-*/
+
 const server = http2.createSecureServer({
   key: fs.readFileSync('self.key'),
   cert: fs.readFileSync('self.crt')
@@ -486,10 +400,8 @@ server.on('error', (err) => {
 });
 q.info(`Server listening on port ${port}`);
 
-function file_send(stream, headers, address)
-{
-	fs.stat(address, (err, stat) =>
-	{
+function file_send(stream, headers, address) {
+	fs.stat(address, (err, stat) =>{
 		if(err)
 		{
 			q.warn(`error occured while sending a file! - ${err}`);
@@ -530,8 +442,7 @@ function file_send(stream, headers, address)
 					stream.respond(head);
 					file.pipe(stream);
 					var destroied = false;
-					stream.session.on('close', () => 
-					{
+					stream.session.on('close', () =>  {
 						if(!destroied) {
 							file.unpipe();
 							file.destroy();
@@ -635,8 +546,7 @@ command
 var stdin = process.openStdin();
 stdin.addListener("data", (d) => { //input
 	var get = d.toString().trim().split(" ");
-	if (get[0] == "add")
-		{
+	if (get[0] == "add")  {
 			var par = d.toString().trim().split(`"`);
 			if (par[1] == null || par[3] == null) 
 			{
@@ -670,10 +580,8 @@ stdin.addListener("data", (d) => { //input
 			q.error(`${par[1]} was not exist`);
 		}
 	}
-	if (get[0] == "get")
-	{
-		for(var folder in Shared_Folder)
-		{
+	if (get[0] == "get") {
+		for(var folder in Shared_Folder) {
 			q.info(folder + folder.keys);
 		}
 	}
@@ -686,8 +594,7 @@ stdin.addListener("data", (d) => { //input
 		});
 		q.info('Saved');
 	}
-	if (get[0] == "lod")
-	{
+	if (get[0] == "lod") {
 		
 	}
  });
