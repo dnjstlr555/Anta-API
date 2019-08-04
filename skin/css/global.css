@@ -150,7 +150,7 @@ video:-webkit-full-screen
 { 
 	position: fixed; 
 	z-index: 1; 
-	height: auto; 
+	height: 3vh; 
 	width: 100%; 
 	background: rgba(1,1,1,0.05); 
 	padding: 10px 20px 10px 15px; 
@@ -225,7 +225,7 @@ video:-webkit-full-screen
 	display:flex;
 	flex-wrap:wrap;
 	justify-content: space-between;
-	padding-top:2em;
+	padding: 5em 0.5em 0;
 }
 
 #form .element 
