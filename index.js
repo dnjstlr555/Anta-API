@@ -13,6 +13,7 @@ const mime = require('mime-types')
 const subsrt = require('./subsrt.js') // use modified subsrt library
 const iconv = require('iconv-lite') // for detecting encoding types of given files
 const chardet = require('chardet')
+const os = require('os');
 const LOG = require('./lib/log.js')
 const q = new LOG()
 
@@ -76,6 +77,32 @@ function ConvertAddress (Address) {
   return null
 }
 
+function FormdataParse(body, headers) {
+  const rawType=headers['content-type'].split(';')
+  const type=rawType[0];
+  const bound=rawType[1].split('=')[1];
+  const bodybyline=body.split(/\r?\n/);
+  const name=bodybyline[1].substring(bodybyline[1].indexOf(`filename="`)+`filename="`.length, bodybyline[1].lastIndexOf(`"`))
+  const valid=(bodybyline[0].includes(bound))
+  const actualbody=bodybyline.slice(3)
+  let data="";
+  for(const line of actualbody) {
+    if(!line.includes(bound)) {
+      data+=line+os.EOL;
+    } else {
+      break;
+    }
+  }
+  const send = {
+    type:type,
+    bound:bound,
+    name:name,
+    valid:valid,
+    body:data,
+  }
+  return send
+}
+
 server.on('session', (ses) => {
   q.network(`New Session - ${JSON.stringify(ses)}`, 1)
 })
@@ -120,7 +147,6 @@ server.on('stream', (stream, headers) => {
           q.warn(`${file} - Null Resource Parameter Arguments`)
         }
       } else if (data === 'Convert-Subtitle') {
-        console.log('=======[We are In Convert]======')
         file = Param.get('file')
         if (file) {
           // file = file.split(`/`);
@@ -135,10 +161,7 @@ server.on('stream', (stream, headers) => {
                 } else if (stats.isFile()) {
                   var tmp = fs.readFileSync(realAddress)
                   var sub
-                  // var encode = jschardet.detect(sub);
-                  // console.log(encode);
                   var encode2 = chardet.detect(tmp)
-                  console.log('sec ' + encode2)
                   if (iconv.encodingExists(encode2)) {
                     sub = iconv.decode(tmp, encode2) // encode.encoding
                   } else {
@@ -188,6 +211,43 @@ server.on('stream', (stream, headers) => {
           stream.respond({ ':status': 404 })
           stream.end(`Error - No such file on resource! `)
           q.warn(`There was no parameter on converting files`)
+        }
+      } else if(data === "Upload") {
+        uploadFolder = Param.get('folder')
+        if (uploadFolder) {
+          if(headers[':method']==="POST") {
+            let r=ConvertAddress(uploadFolder)
+            if(r) {
+              let data=""
+              stream.on("data", (chunk)=>{
+                  if(chunk!=undefined) {
+                    data+=chunk;
+                  }
+              });
+              stream.on("end", () => {
+                let dt=FormdataParse(data, headers)
+                fs.writeFile(path.join(r, dt.name), dt.body, (err) => {
+                  if (err) {
+                    q.warn(`${path.join(r, dt.name)} - error while writing file`)
+                  } else {
+                    q.info(`${path.join(r, dt.name)} uploaded`)
+                  }
+                });
+              })
+            } else {
+              stream.respond({ ':status': 404 })
+              stream.end(`Error - No such file on resource!`)
+              q.warn(`${file} - Not shared`)
+            }
+          } else {
+            stream.respond({ ':status': 405 })
+            stream.end(`Error - No such file on resource!`)
+            q.warn(`${file} - Null Resource Parameter Arguments`)
+          }
+        } else {
+          stream.respond({ ':status': 403 })
+          stream.end(`Error - No such file on resource!`)
+          q.warn(`${file} - Null Resource Parameter Arguments`)
         }
       } else {
         stream.respond({ ':status': 404 })

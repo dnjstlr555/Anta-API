@@ -6,10 +6,10 @@ function formatSeconds(seconds) {
 
 const __info =
 `
-ANTA alpha
-Present by node.js
+Anta - Atomic network storage
+Made via Node.js with <3
 `
-
+var url;
 const resfix = "?action=Resource&file=";
 doc.body.className += 'progress';
 
@@ -60,7 +60,7 @@ function listdata(data)
 {
 	var files = data.files;
 	var dirs = data.directories;
-	var url = data.url;
+	url = data.url;
 	//doc.title = `ANTA - ${decodeURI(data.url)}`;
 	var buf = "";
 	
@@ -223,10 +223,38 @@ function listdata(data)
 	
 	buf += `<div style="clear: both;"></div>`;
 	
-	doc.getElementById("form").innerHTML = buf;
+	doc.getElementById("form").innerHTML += buf;
 	doc.body.className = doc.body.className.replace("progress", "");
 	//var myLazyLoad = new LazyLoad();
 	init_swiper();
+
+	function readfiles(files) {
+		var xmlHttpRequest = new XMLHttpRequest();
+		xmlHttpRequest.open("POST", `?action=Upload&folder=${url}`, true);
+		var formData = new FormData();
+		
+		for (var i = 0; i < files.length; i++) {
+			/*
+			document.getElementById('fileDragName').value = files[i].name
+			document.getElementById('fileDragSize').value = files[i].size
+			document.getElementById('fileDragType').value = files[i].type
+			*/
+			formData.append("file", files[i], files[i].name);
+			xmlHttpRequest.send(formData);
+		}
+	}
+
+	var holder = document.getElementById('form');
+	holder.ondragover = function () { this.className = 'hover'; return false; };
+	holder.ondragend = function () { this.className = 'hovertrans'; return false; };
+	holder.ondragleave = function () { this.className = 'hovertrans'; return false; };
+	holder.ondrop = function (e) {
+		this.className = '';
+		e.preventDefault();
+		readfiles(e.dataTransfer.files);
+		location.reload();
+	}
+
 }
 
 function handler(element)
@@ -335,49 +363,3 @@ function transition_fullscreen(element) //element : el_img
 	img.classList.add('full');
 }
 
-/*
-function dropHandler(ev) {
-  console.log('File(s) dropped');
-
-  // Prevent default behavior (Prevent file from being opened)
-  ev.preventDefault();
-
-  if (ev.dataTransfer.items) {
-    // Use DataTransferItemList interface to access the file(s)
-    for (var i = 0; i < ev.dataTransfer.items.length; i++) {
-      // If dropped items aren't files, reject them
-      if (ev.dataTransfer.items[i].kind === 'file') {
-        var file = ev.dataTransfer.items[i].getAsFile();
-        console.log('...() file[' + i + '].name = ' + file.name);
-      }
-    }
-  } else {
-    // Use DataTransfer interface to access the file(s)
-    for (var i = 0; i < ev.dataTransfer.files.length; i++) {
-      console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
-    }
-  } 
-  
-  // Pass event to removeDragData for cleanup
-  removeDragData(ev)
-}
-function dragOverHandler(ev) {
-  console.log('File(s) in drop zone'); 
-  doc.getElementById("article").className = (ev.type === 'dragover' ? 'show' : '');
-  // Prevent default behavior (Prevent file from being opened)
-  ev.preventDefault();
-}
-
-function removeDragData(ev) {
-  console.log('Removing drag data')
-
-  if (ev.dataTransfer.items) {
-    // Use DataTransferItemList interface to remove the drag data
-    ev.dataTransfer.items.clear();
-  } else {
-    // Use DataTransfer interface to remove the drag data
-    ev.dataTransfer.clearData();
-  }
-}
- ondrop="dropHandler(event);" ondragenter="dragOverHandler(event);" ondragleave="dragOverHandler(event);"
-*/

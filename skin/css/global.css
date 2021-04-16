@@ -226,8 +226,30 @@ video:-webkit-full-screen
 	flex-wrap:wrap;
 	justify-content: space-between;
 	padding: 5em 0.5em 0;
+	box-sizing:border-box;
 }
-
+#form.hover {
+	animation:dropper 0.25s forwards;
+}
+#form.hovertrans {
+	animation:dropperout 0.25s forwards;
+}
+@keyframes dropper {
+	from {
+		
+	}
+	to {
+		box-shadow: inset 0px 0px 0.4em 0.4em #4f93df;
+	}
+}
+@keyframes dropperout {
+	from {
+		box-shadow: inset 0px 0px 0.4em 0.4em #4f93df;
+	}
+	to {
+		
+	}
+}
 #form .element 
 {
 	min-height: 20%;
@@ -338,3 +360,4 @@ video:-webkit-full-screen
 		transform:rotate(0deg) scale(1);
 	}
 }
+
