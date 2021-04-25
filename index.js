@@ -3,7 +3,8 @@ console.log('Initializing - Loading Modules')
 const hostname = 'localhost'
 const port = 443
 const portAlt = 80
-
+const keyLocation = 'cert/private.key.pem'
+const certLocation = 'cert/domain.cert.pem'
 const http2 = require('http2')
 const http = require('http')
 const { URLSearchParams } = require('url')
@@ -18,8 +19,8 @@ const LOG = require('./lib/log.js')
 const q = new LOG()
 
 const server = http2.createSecureServer({
-  key: fs.readFileSync('cert/private.key.pem'),
-  cert: fs.readFileSync('cert/domain.cert.pem')
+  key: fs.readFileSync(keyLocation),
+  cert: fs.readFileSync(certLocation)
 }, (req, res) => {
   q.network(`Request From ${req.connection.remoteAddress}`)
 })
