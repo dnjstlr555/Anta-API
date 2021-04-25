@@ -1,5 +1,12 @@
 # Anta API
 Anta API is lightweight network storage service. [Demo Here](https://kickback.party)
+## Feature 
+- Supports video, music streaming<br>
+- Video streaming with automatic subtitle detection within same folder<br>
+- Subtitle converter for smi to vtt(to provide subtitle on the streaming video) - planning to support more various formats<br>
+- Swipable image viewer<br>
+- Responsive UI design<br>
+- Supports fast http2<br>
 
 ## Installation 
 Firstly, Install 'mime-types', 'iconv-lite', 'chardet' via 'npm install'. <br>
