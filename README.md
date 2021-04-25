@@ -53,7 +53,7 @@ show a list of shared file list.
 
 ## TODO
 - Upload feature
-- Support downloading bigger files (currently about ~100GB per files)
+- Support downloading bigger files (currently about ~100GB per a file)
 - Save and load feature for shared folder lists
 - Managing via configuration file
 - More command
