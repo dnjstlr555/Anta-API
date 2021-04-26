@@ -1,5 +1,12 @@
 # Anta API
 Anta API is lightweight network storage service. [Demo Here](https://kickback.party)
+## Feature 
+- Supports video, music streaming<br>
+- Video streaming with automatic subtitle detection within same folder<br>
+- Subtitle converter for smi to vtt(to provide subtitle on the streaming video) - planning to support more various formats<br>
+- Swipable image viewer<br>
+- Responsive UI design<br>
+- Supports fast http2<br>
 
 ## Installation 
 Firstly, Install 'mime-types', 'iconv-lite', 'chardet' via 'npm install'. <br>
@@ -46,7 +53,7 @@ show a list of shared file list.
 
 ## TODO
 - Upload feature
-- Support downloading bigger files (currently about ~100GB per files)
+- Support downloading bigger files (currently about ~100GB per a file)
 - Save and load feature for shared folder lists
 - Managing via configuration file
 - More command
