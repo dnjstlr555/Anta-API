@@ -5,6 +5,7 @@ const port = 443
 const portAlt = 80
 const keyLocation = 'cert/private.key.pem'
 const certLocation = 'cert/domain.cert.pem'
+
 const http2 = require('http2')
 const http = require('http')
 const { URLSearchParams } = require('url')
@@ -17,6 +18,7 @@ const chardet = require('chardet')
 const os = require('os');
 const LOG = require('./lib/log.js')
 const q = new LOG()
+
 
 const server = http2.createSecureServer({
   key: fs.readFileSync(keyLocation),
