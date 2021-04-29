@@ -116,3 +116,4 @@ dist
 .pnp.*
 
 cert/
+*.DS_Store
