@@ -65,3 +65,4 @@ show a list of shared file list.
 - Managing via configuration file
 - More command
 - GUI support
+- Login feature
