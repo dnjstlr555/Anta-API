@@ -22,7 +22,14 @@ You cannot run the sever unless you put them all in the location.<br>
 const keyLocation = 'cert/private.key.pem'
 const certLocation = 'cert/domain.cert.pem'
 ```
-For creating local key and cert for testing purpose, [Check here](https://gist.github.com/cecilemuller/9492b848eb8fe46d462abeb26656c4f8)<br>
+For creating local key and cert for testing purpose,
+> To Generate RootCA.pem, RootCA.key & RootCA.crt:
+```
+openssl req -x509 -nodes -new -sha256 -days 1024 -newkey rsa:2048 -keyout RootCA.key -out RootCA.pem -subj "/C=US/CN=Example-Root-CA"
+openssl x509 -outform pem -in RootCA.pem -out RootCA.crt
+```
+In this example, 'RootCA.key' will be keyLocation, 'RootCA.pem' will be certLocation.<br>
+For more details, [Check here](https://gist.github.com/cecilemuller/9492b848eb8fe46d462abeb26656c4f8)<br>
 Or you could use index-legacy.js. It is based on http, but no longer maintained. Recommending for use local only.<br><br>
 Finally, excute index.js with node.
 ```
