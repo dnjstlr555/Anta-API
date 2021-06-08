@@ -1,8 +1,8 @@
 console.log('Initializing - Loading Modules')
 
 const hostname = 'localhost'
-const port = 443
-const portAlt = 80
+const port = 443 // used for http2/https server
+const portAlt = 80 // used for http server (redirection)
 const keyLocation = 'cert/private.key.pem'
 const certLocation = 'cert/domain.cert.pem'
 
@@ -31,8 +31,8 @@ server.listen(port, hostname, () => {
   q.done(`${hostname}:${port} - Server Started`)
 })
 http.createServer((req, res) => {
-  q.network(`${hostname}:${portAlt} - Request From ${req.connection.remoteAddress}`)
-  res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` })
+  q.network(`${hostname}:${portAlt} - Request From ${req.connection.remoteAddress} -> alt https://${req.headers.host.split(":")[0]}:${port}${req.url}`)
+  res.writeHead(301, { Location: `https://${req.headers.host.split(":")[0]}:${port}${req.url}` })
   res.end()
 }).listen(portAlt, hostname, () => {
   q.done(`${hostname}:${portAlt} - Alternative Server Started`)
