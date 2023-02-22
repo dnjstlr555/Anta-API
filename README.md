@@ -1,12 +1,12 @@
 # Anta API
-Anta is a remote file explorer. [Check this demo video](https://www.youtube.com/watch?v=XggPtIFNnFw)
+Anta is a multi-functional self hosted media streaming service. [Check this demo video](https://www.youtube.com/watch?v=XggPtIFNnFw)
 ## Feature 
 - Supports video, music streaming<br>
 - Video streaming with automatic subtitle detection within same folder<br>
 - Subtitle converter for smi to vtt(to provide subtitle on the streaming video) - planning to support more various formats<br>
 - Swipable image viewer<br>
 - Responsive UI design<br>
-- Supports fast http2<br>
+- Works on http2 protocol
 
 ## Installation 
 Firstly, Install 'mime-types', 'iconv-lite', 'chardet' via 'npm install'. <br>
@@ -59,10 +59,15 @@ show a list of shared file list.
 
 
 ## TODO
+### Media
+- Support mutiple codec to play at browser (using ffmpeg)
+- Support many subtitle formats to use at watch
+- Support many types of documents and edits (pdf, hwp, pptx, doc..)
+- Playlist feature for playing musics
+- Show album cover of currently playing music
+### Basic Improvements
 - Upload feature
 - Support downloading bigger files (currently about ~100GB per a file)
-- Save and load feature for shared folder lists
-- Managing via configuration file
-- More command
-- GUI support
+- Make it more easy to use (GUI supports, Initialization wizard..)
 - Login feature
+
