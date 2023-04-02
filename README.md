@@ -70,4 +70,5 @@ show a list of shared file list.
 - Support downloading bigger files (currently about ~100GB per a file)
 - Make it more easy to use (GUI supports, Initialization wizard..)
 - Login feature
+- Independence from npm modules
 
