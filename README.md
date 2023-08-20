@@ -59,16 +59,5 @@ show a list of shared file list.
 
 
 ## TODO
-### Media
-- Support mutiple codec to play at browser (using ffmpeg)
-- Support many subtitle formats to use at watch
-- Support many types of documents and edits (pdf, hwp, pptx, doc..)
-- Playlist feature for playing musics
-- Show album cover of currently playing music
-### Basic Improvements
-- Upload feature
-- Support downloading bigger files (currently about ~100GB per a file)
-- Make it more easy to use (GUI supports, Initialization wizard..)
-- Login feature
-- Independence from npm modules
+[Visit Here For Future Roadmaps](https://oh16.notion.site/ecd578a7359f4fc493272098593cfff7?v=d79ef83ea44e405dbdfa931b7127c5d9&pvs=4)
 
