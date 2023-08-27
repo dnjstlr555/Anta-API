@@ -1,5 +1,5 @@
 # Anta API
-Anta is a multi-functional self hosted media streaming service. [Check this demo video](https://www.youtube.com/watch?v=XggPtIFNnFw)
+Anta is a multi-functional self hosted media streaming service. [Check this demo video](https://www.youtube.com/watch?v=XggPtIFNnFw) / [#2](https://www.youtube.com/watch?v=F4RvdVo_5BM)
 ## Feature 
 - Supports video, music streaming<br>
 - Video streaming with automatic subtitle detection within same folder<br>
