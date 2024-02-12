@@ -3,60 +3,39 @@ Anta is a multi-functional self hosted media streaming service. [Check this demo
 ## Feature 
 - Supports video, music streaming<br>
 - Video streaming with automatic subtitle detection within same folder<br>
-- Subtitle converter for smi to vtt(to provide subtitle on the streaming video) - planning to support more various formats<br>
+- Subtitle converter for any subtitle to vtt(to provide subtitle on the streaming video) within same folder<br>
 - Swipable image viewer<br>
 - Responsive UI design<br>
 - Works on http2 protocol
+- Groupwatch feature (sync a video between two users, experimental)
 
 ## Installation 
-Firstly, Install 'mime-types', 'iconv-lite', 'chardet' via 'npm install'. <br>
-Specify hostname and ports at index.js after.
-```python
-const hostname = 'localhost' 
-const port = 443 # Port number for http2/https
-const portAlt = 80 # Port for http(use for redirection to http2/https)
 ```
-Second, You need to provide key and cert files at './cert/private.key.pem' and './cert/domain.cert.pem'. You can specify the location at top line of index.js.<br>
-You cannot run the sever unless you put them all in the location.<br>
-```python
-const keyLocation = 'cert/private.key.pem'
-const certLocation = 'cert/domain.cert.pem'
+npm install
 ```
-For creating local key and cert for testing purpose,
-> To Generate RootCA.pem, RootCA.key & RootCA.crt:
+will download necessary packages.
 ```
-openssl req -x509 -nodes -new -sha256 -days 1024 -newkey rsa:2048 -keyout RootCA.key -out RootCA.pem -subj "/C=US/CN=Example-Root-CA"
-openssl x509 -outform pem -in RootCA.pem -out RootCA.crt
+cd src
+node app.js
 ```
-In this example, 'RootCA.key' will be keyLocation, 'RootCA.pem' will be certLocation.<br>
-For more details, [Check here](https://gist.github.com/cecilemuller/9492b848eb8fe46d462abeb26656c4f8)<br>
-Or you could use index-legacy.js. It is based on http, but no longer maintained. Recommending for use local only.<br><br>
-Finally, excute index.js with node.
+Finally, this command will start the server and create new configuration files.<br>
+at **shared.cfg** you can specify folders to share.
 ```
-node index.js
+#shared.cfg
+example=/usr/path/to/somewhere
+exmaple2=C:\users\kim\Downloads
 ```
-If you are on linux or macOS, sudo is required.
+at **general.cfg** you can adjust various settings. 
 ```
-sudo node index.js
+port=443 #port number for main server.
+portRedir=80 #port for http->https redirection server.
+ssl=true #if true, use https(http2).  
+sslKey=./ssl.key #specify key and cert for https server.
+sslCert=./ssl.crt 
+skin=./skin #skin folder that contains frontend data.
+startWizard=true #currently do nothing.
 ```
-
-## Usage
-You can type various commands after the server has opened. 
-```
-add "Real Address" "Name"
-ex) add "/home/pi/somefolder" "MyFolder"
-```
-add "Real Address" to a shared folder list. "Name" will be shown to the user.
-```
-del "Name"
-ex) del "MyFolder"
-```
-delete "Name" named folder from shared folder list.
-```
-get
-```
-show a list of shared file list.
-
+Now, restart server again and enter http://localhost.
 
 ## TODO
 [Visit Here For Future Roadmaps](https://oh16.notion.site/ecd578a7359f4fc493272098593cfff7?v=d79ef83ea44e405dbdfa931b7127c5d9&pvs=4)
