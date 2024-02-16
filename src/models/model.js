@@ -2,6 +2,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const essentialConfig = require('./essentialConfig');
 const CURRENT_DIR = __dirname.split(/\\|\//).slice(0, -1).join("/");
 
 class Model {
@@ -28,7 +29,7 @@ class Model {
         let isConfigValid = configPath !== null && fs.existsSync(configPath);
         // Validate configs and edit if necessary
         let shared = isSharedValid ? ValidateShared(ParseConfig(sharedPath)) : {};
-        let general = isConfigValid ? ValidateGeneral(ParseConfig(configPath)) : EssentialConfig();
+        let general = isConfigValid ? ValidateGeneral(ParseConfig(configPath)) : essentialConfig;
         // TODO : integrate plugin configs
         // Merge configs into one object
         settings = Object.assign(settings, {sharedList:shared});
@@ -41,12 +42,20 @@ class Model {
             for(let i of Object.keys(shared)) {
                 file += i + "=" + shared[i] + os.EOL;
             }
+            //if the folder is not exist, create it
+            if(!fs.existsSync(path.dirname(configPath))) {
+                fs.mkdirSync(path.dirname(configPath), {recursive:true});
+            }
             fs.writeFileSync(sharedPath, file);
         }
         if(!isConfigValid) {
             let file = "";
             for(let i of Object.keys(general)) {
                 file += i + "=" + general[i] + os.EOL;
+            }
+            //if the folder is not exist, create it
+            if(!fs.existsSync(path.dirname(configPath))) {
+                fs.mkdirSync(path.dirname(configPath), {recursive:true});
             }
             fs.writeFileSync(configPath, file);
         }
@@ -75,17 +84,6 @@ class Model {
                 folders[split[0]] = split[1];
             }
             return folders;
-        }
-        function EssentialConfig() {
-            return {
-                port:443,
-                portRedir:80,
-                ssl:true, // When false, use http, portRedir is ignored
-                sslKey:"./key.pem",
-                sslCert:"./cert.pem",
-                skin:"./skin",
-                startWizard:true,
-            };
         }
         function ValidateShared(cfg) {
             for(let i in cfg) {
@@ -129,43 +127,69 @@ class Model {
         example : path = /mv/koenokatachi.smi or mv/koenokatachi.smi 
         returns : /home/user/movie/koenokatachi.smi (combined path of sharedList and path)
         */
+        const {IsSharedEntry, ConvertEntry, IsValidEntryFolder} = Helper(this.settings);
         if(fakePath == null) return null;
         if(fakePath[0] == '/') fakePath = fakePath.slice(1); // remove first '/'
         const pathSplited = fakePath.split('/');
-        if(!this.#IsSharedEntry(pathSplited[0])) return null; // if there is no shared entry or the entry is invalid, return null
-        const isValidEntry=await this.#IsValidEntryFolder(pathSplited[0]);
+        if(!IsSharedEntry(pathSplited[0])) return null; // if there is no shared entry or the entry is invalid, return null
+        const isValidEntry=await IsValidEntryFolder(pathSplited[0]);
         if(!isValidEntry) return null;
-        return path.join(this.#ConvertEntry(pathSplited[0]), ...pathSplited.slice(1));
-    }
-    #IsSharedEntry(entry) {
-        return Object.keys(this.settings.sharedList).includes(entry);
-    }
-    #ConvertEntry(entry) {
-        return this.settings.sharedList[entry];
-    }
-    #IsValidEntryFolder(entry) {
-        let Address=this.#ConvertEntry(entry);
-        return new Promise((resolve,reject)=>{
-            fs.stat(Address, (err, stats) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(stats.isDirectory());
-            })
-        });
+        return path.join(ConvertEntry(pathSplited[0]), ...pathSplited.slice(1));
+
+        function Helper(settings) {
+            function IsSharedEntry(entry) {
+                return Object.keys(settings.sharedList).includes(entry);
+            }
+            function ConvertEntry(entry) {
+                return settings.sharedList[entry];
+            }
+            function IsValidEntryFolder(entry) {
+                let Address=ConvertEntry(entry);
+                return new Promise((resolve,reject)=>{
+                    fs.stat(Address, (err, stats) => {
+                        if (err) {
+                            reject(err);
+                        }
+                        resolve(stats.isDirectory());
+                    })
+                });
+            }
+            return {IsSharedEntry, ConvertEntry, IsValidEntryFolder};
+        }
+
     }
     GetSkinFolder() {
         const SkinFolder=path.join(CURRENT_DIR,this.settings.skin)
         return SkinFolder;
     }
     GetSharedList() {
+        //Return the shared folder list
         return this.settings.sharedList;
     }
+    // Custom Model for Plugins
     RegisterCustomModel(name, model) {
         this.#customModels[name]=model;
     }
     GetCustomModel(name) {
         return this.#customModels[name];
+    }
+
+    // Configuration Management 
+    GetHTTP2Config() {
+        return {
+            key: fs.readFileSync(this.settings.sslKey),
+            cert: fs.readFileSync(this.settings.sslCert)
+        };
+    }
+    GetFileUploadConfigs() {
+        return {
+            useTempFiles:this.settings.fileUploadUseTempFiles,
+            tempFileDir:this.settings.fileUploadTempDir,
+            limits:this.settings.fileUploadLimit
+        };
+    }
+    GetAutoPushConfigs() {
+        return this.GetSkinFolder();
     }
 }
 

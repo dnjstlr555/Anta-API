@@ -7,32 +7,22 @@ Made via Node.js with <3
 
 const resfix = "?resource=";
 doc.body.className += 'progress';
-
-function RequestList() {
-	return new Promise((resolve, reject) => {
-		var xmlHttpRequest = new XMLHttpRequest();
-		xmlHttpRequest.open("GET", `${GetURL()}?list="ascend"`, true);
-		xmlHttpRequest.onreadystatechange = function() {
-			console.log(xmlHttpRequest.readyState, xmlHttpRequest.status);
-			if (xmlHttpRequest.readyState == 4) {
-				if (xmlHttpRequest.status == 200) {
-					resolve(xmlHttpRequest.responseText);
-				} else {
-					reject(`error ${xmlHttpRequest.readyState} ${xmlHttpRequest.status} : ${xmlHttpRequest.statusText}`);
-				}
-			}
-		}
-		xmlHttpRequest.send(null);
-	});
+/*
+(async function() {
+	const request=await fetch(`${GetURL()}?list="ascend"`)
+	if(request.ok) {
+		const data = await request.json();
+		listdata(data);
+	} else {
+		console.log("Failed to fetch data");
+	}
 	function GetURL() {
 		var url = new URL(window.location.href);
 		return url.pathname;
 	}
-}
-RequestList().then((data) => {
-	listdata(JSON.parse(decodeURIComponent(data)));
-});
-
+})();
+*/
+listdata(antainit);
 function listdata(data)
 {
 	var files = data.files;
@@ -195,7 +185,7 @@ function listdata(data)
 			`</div>`;
 		}
 	}
-	if(!buf) buf = `<div class="init">이 폴더는 비어 있습니다.</div>\n`;
+	if(!buf) buf = `<div class="init">The folder is empty.</div>\n`;
 	
 	buf += `<div style="clear: both;"></div>`;
 	
@@ -299,9 +289,6 @@ async function wrap_slide(type)
 				videoElement.src =`${resfix}/blank.mp4`; // empty source
 				videoElement.load();
 				player.destroy();
-				for(let i of videoIntvls) {
-					clearInterval(i);
-				}
 				if(hostid!=-1) {
 					//it means the user were the host
 					let result = await fetch(`?party=close&id=${hostid}`);

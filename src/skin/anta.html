@@ -41,8 +41,14 @@
 		<div id="floor">
 			<a style='cursor: pointer;' onclick=alert(__info);>Anta Alpha</a>
 		</div>
+		<form method="post" enctype="multipart/form-data">
+			<label for="file">File</label>
+			<input id="file" name="file" type="file" />
+			<button>Upload</button>
+		  </form>
 	</div>
 </div>
+<antainit></antainit> <!-- This element will be replaced with file lists-->
 <script>
 var doc = document;
 var player;

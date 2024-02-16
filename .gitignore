@@ -118,3 +118,4 @@ dist
 cert/
 *.DS_Store
 configs/
+temp/
