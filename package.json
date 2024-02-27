@@ -1,9 +1,40 @@
 {
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.3",
     "fluent-ffmpeg": "^2.1.2",
     "http2-express-bridge": "^1.0.7",
+    "jsonwebtoken": "^9.0.2",
     "subsrt": "^1.1.1"
-  }
+  },
+  "name": "anta-api",
+  "description": "Anta is a multi-functional self hosted media streaming service. [Check this demo video](https://www.youtube.com/watch?v=XggPtIFNnFw) / [#2](https://www.youtube.com/watch?v=F4RvdVo_5BM)\r ## Feature \r - Supports video, music streaming<br>\r - Video streaming with automatic subtitle detection within same folder<br>\r - Subtitle converter for any subtitle to vtt(to provide subtitle on the streaming video) within same folder<br>\r - Swipable image viewer<br>\r - Responsive UI design<br>\r - Works on http2 protocol\r - Groupwatch feature (sync a video between two users, experimental)",
+  "version": "1.0.0",
+  "main": "./src/server.js",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.3",
+    "superagent": "^8.1.2",
+    "supertest": "^6.3.4"
+  },
+  "scripts": {
+    "start": "node ./src/server.js",
+    "dev": "nodemon ./src/server.js",
+    "test": "jest --detectOpenHandles"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dnjstlr555/Anta-API.git"
+  },
+  "author": "One Sik Oh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dnjstlr555/Anta-API/issues"
+  },
+  "homepage": "https://github.com/dnjstlr555/Anta-API#readme"
 }

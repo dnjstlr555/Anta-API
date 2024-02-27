@@ -93,7 +93,7 @@ class Model {
         }
         function ValidateGeneral(cfg) {
             //check entries from essentialConfig exits and valid, if not use default one instead
-            let essential = EssentialConfig();
+            let essential = essentialConfig;
             for(let i of Object.keys(essential)) {
                 if(cfg[i] == null) {
                     cfg[i] = essential[i];
@@ -118,14 +118,13 @@ class Model {
     #ConstructUsers() {
         // TODO : Placeholder
         return {
-            "admin":"admin",
-            "user":"user"
         };
     }
     async ConvertPath(fakePath) {
         /*
         example : path = /mv/koenokatachi.smi or mv/koenokatachi.smi 
         returns : /home/user/movie/koenokatachi.smi (combined path of sharedList and path)
+        does not check if the file exists or not.
         */
         const {IsSharedEntry, ConvertEntry, IsValidEntryFolder} = Helper(this.settings);
         if(fakePath == null) return null;
@@ -156,7 +155,6 @@ class Model {
             }
             return {IsSharedEntry, ConvertEntry, IsValidEntryFolder};
         }
-
     }
     GetSkinFolder() {
         const SkinFolder=path.join(CURRENT_DIR,this.settings.skin)
@@ -188,8 +186,19 @@ class Model {
             limits:this.settings.fileUploadLimit
         };
     }
-    GetAutoPushConfigs() {
-        return this.GetSkinFolder();
+
+    // User Management
+    GetUserHash(username) {
+        return this.#users[username];
+    }
+    ExistUser(username) {
+        return this.#users[username] != null;
+    }
+    AddUser(username, hashedPassword) {
+        this.#users[username] = hashedPassword;
+    }
+    RemoveUser(username) {
+        delete this.#users[username];
     }
 }
 

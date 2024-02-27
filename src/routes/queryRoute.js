@@ -20,7 +20,6 @@ module.exports = (controller) => {
             return next();
         }
         if (queryKeys.includes("resource")) {
-            //If the query includes "resource", send the skin resources
             controller.CommonRequestHandlers.SendResource(req, res, req.query.resource);
             return;
         }
@@ -48,25 +47,26 @@ module.exports = (controller) => {
                 FlagError(500);
                 return next();
             }
-            return;
         }
         if (queryKeys.includes("rename")) {
             //If the query includes "rename", rename the file
             const convertedPath = await ConvertPath();
-            if (convertedPath == false || req.query.to == undefined) {
+            if (convertedPath == false) {
                 return next();
             }
-            controller.FileManageHandlers.RenameFile(req, res, convertedPath, req.query.rename, req.query.to);
-            return;
+            const result = await controller.FileManageHandlers.RenameFile(req, res, convertedPath, req.query.rename, req.query.to);
+            if (result == false) {
+                FlagError(500);
+                return next();
+            }
         }
         const result = await controller.HandlePlugin(req, res);
         if (result[0] == false) {
             //If the plugin's result is false,  means the plugin has failed or the plugin is not found. Flag the error and continue to next middleware
             FlagError(result[1]);
             return next();
-        } else {
-            return;
-        }
+        } 
+        return;
         // Helper Functions
         function FlagError(ErrorCode) {
             res.locals.ErrorCode = ErrorCode;

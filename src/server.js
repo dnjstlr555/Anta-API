@@ -3,8 +3,7 @@ const http2 = require('http2')
 const http = require('http')
 
 //define internal module
-const {app, model} = require('./app')
-
+const {app, model} = require('./app')(process.argv[2], process.argv[3])
 const port = model.settings.port;
 const server = model.settings.ssl == true ? http2.createSecureServer(model.GetHTTP2Config(), app) : http.createServer(app);
 server.listen(port, function () {

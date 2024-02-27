@@ -1,15 +1,11 @@
 // This route handles the URL requests if the URL's path is valid to the file system.
 
 /*
-유저의 URL 요청 시나리오:
-1. /?resource="js/music.js" : skin으로 지정된 경로에 있는 music.js 파일을 읽어서 반환한다.
-2. /?"<plugin name>"="<something>"&<something2>="<something3>" : plugin을 호출, something은 첫번쨰 인자로 나머지 something2, something3등은 필요하면 dict 형태로 두번째 인자로 넘긴다.
-  ex) /?"consub"="/mv/koenokatachi.smi"
-  ex) /?"zip"="/mv"
-3. (여기서구현)POST /mv : mv 폴더에 전송된 파일을 저장한다. 
-4. (여기서구현)GET /mv : mv 폴더의 front를 전송한다. v (완료)
-5. GET /mv?list="ascend" : mv 폴더의 list JSON을 내림차순으로 전송한다.
-6. (여기서구현)GET /mv/koenokatachi.smi : mv 폴더의 koenokatachi.smi 파일을 전송한다. v (완료)
+TODO : 현재 Route에서 Controller로 메소드를 실행하고 그 결과로 return된 값을 처리함
+이는 next()를 Route에서 사용해야하고, return을 통해 Route의 흐름 제어를 해야하기 때문에 그렇게 됨
+원래 취지는 url 해석은 Route에서 하고, Controller에서는 그 결과를 처리하는 것이었음
+다만 그렇게 하다 보니 if문이 많아져서 뭔가 안깔끔함
+좀더 생각해볼것..
 */
 const express = require("express");
 
@@ -55,7 +51,7 @@ module.exports = (controller) => {
             FlagError(404);
             return next();
         }
-        const result = controller.SaveFile(req, res, convertedPath);
+        const result = await controller.FileManageHandlers.SaveFile(req, res, convertedPath);
         if (result == false) {
             FlagError(500);
             return next();

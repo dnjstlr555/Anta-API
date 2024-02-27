@@ -1,0 +1,1 @@
+leaving them for future implementations (because the skin's codes are based on legacy codes)

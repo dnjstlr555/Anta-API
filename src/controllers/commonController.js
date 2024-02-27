@@ -13,7 +13,7 @@ module.exports = (context, model) => {
     };
     async function SendCommonFile(req, res, filePath) {
         if (Object.keys(req.headers).includes("range")) {
-            const range = req.headers.range; // TODO : Check if it is valid range.
+            const range = req.headers.range;
             if (!range) {
                 res.status(400).send("Requires Range header");
                 return;
@@ -30,6 +30,12 @@ module.exports = (context, model) => {
                 "Content-Length": contentLength,
                 "Content-Type": "video/mp4",
             };
+            //check if it is a valid range requested withint the file size
+            //if not, send the entire file
+            if (start >= videoSize || end >= videoSize) {
+                res.status(416).send("Requested range not satisfiable\n" + start + " >= " + videoSize + " || " + end + " >= " + videoSize);
+                return;
+            }
             res.writeHead(206, headers);
             const videoStream = fs.createReadStream(videoPath, { start, end });
             videoStream.pipe(res);
