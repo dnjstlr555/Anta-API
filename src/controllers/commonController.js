@@ -55,7 +55,7 @@ module.exports = (context, model) => {
         }
     }
     async function SendList(req, res, folderPath, toJSON=false) {
-        const sharedList = model.GetSharedList();
+        const sharedList = model.sharedList;
         const contentPathPair = folderPath == "/" ? GetRootFolders(sharedList) : await GetFolderFiles(folderPath);
         const [dirs, files] = await SeperateEncodeEntries(contentPathPair);
         let formattedContents = { url: req.path, files: files, dirs: dirs };
@@ -144,13 +144,13 @@ module.exports = (context, model) => {
     }
     async function SendResource(req, res, resourcePath) {
         //Returns Promise. Send the resource file in the skin folder.
-        const SKIN_FOLDER = model.GetSkinFolder();
+        const SKIN_FOLDER = model.skinPath;
         return SendCommonFile(req, res, path.join(SKIN_FOLDER, resourcePath));
     }
     async function SendFolderFront(req, res, folderPath) {
         //Send the front of the folder, fodlerPath is real path in the system. two case:/ and /(shared folder)
         //replace <antainit> tag with the extraJson
-        const file=await GetFile(path.join(model.GetSkinFolder(),"anta.html"));
+        const file=await GetFile(path.join(model.skinPath,"anta.html"));
         const fileText=file.toString('utf-8');
         //replace <antainit> with the extraJson
         const data=await SendList(req, res, folderPath, true);

@@ -1,9 +1,12 @@
 module.exports = {
-    port:443,
+    port:80,
+    portSSL:443, // when using http2, this is the port for http
     portRedir:80,
-    ssl:true, // When false, use http, portRedir is ignored
-    sslKey:"./key.pem",
-    sslCert:"./cert.pem",
+    ssl:false, // When false, use http, portRedir is ignored
+    sslKey:"./cert/key.pem",
+    sslCert:"./cert/cert.pem",
+    jwtRSAPublicKeyPath:"./cert/jwtRS256.key.pub",
+    jwtRSAPrivateKeyPath:"./cert/jwtRS256.key",
     skin:"./skin",
     startWizard:true,
     fileUploadUseTempFiles:true,

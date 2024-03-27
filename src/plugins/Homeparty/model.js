@@ -10,7 +10,6 @@ class Model {
             time: 0,
             paused: true
         });
-        console.log(this.#party);
         return partyid;
     }
     #GeneratePartyId() {

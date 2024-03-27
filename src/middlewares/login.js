@@ -23,78 +23,26 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
-module.exports = (model) => {
+module.exports = (model, controller) => {
     const router = express.Router();
     router.get("/login", (req, res, next) => {
-        res.send(`
-    <form action="/login" method="post">
-        <input type="text" name="username" />
-        <input type="password" name="password" />
-        <button type="submit">Login</button>
-    </form>
-    <a href="/signup">Signup</a>
-    <script>
-        document.querySelector('form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = e.target.querySelector('input[name="username"]').value;
-            const password = e.target.querySelector('input[name="password"]').value;
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
-            const data = await response.json();
-            if (response.status === 200) {
-                document.cookie = 'token=' + data.token;
-                window.location.href = '/';
-            } else {
-                alert(data.error);
-            }
-        });
-    </script>
-        `);
+        const queryKeys = Object.keys(req.query);
+        if (queryKeys.includes("resource")) {
+            controller.CommonRequestHandlers.SendResource(req, res, req.query.resource);
+            return;
+        }
+        controller.CommonRequestHandlers.SendResource(req, res, "login.html");
     });
     router.get("/logout", (req, res, next) => {
         res.clearCookie('token');
         res.redirect('/login');
     });
-    router.get("/signup", (req, res, next) => {
-        res.send(`
-    <form action="/signup" method="post">
-        <input type="text" name="username" />
-        <input type="password" name="password" />
-        <button type="submit">Signup</button>
-    </form>
-    <script>
-        document.querySelector('form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = e.target.querySelector('input[name="username"]').value;
-            const password = e.target.querySelector('input[name="password"]').value;
-            const response = await fetch('/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
-            const data = await response.json();
-            if (response.status === 200) {
-                document.cookie = 'token=' + data.token;
-                window.location.href = '/';
-            } else {
-                alert(data.error);
-            }
-        });
-    </script>
-        `);
-    });
     router.post("/signup", async (req, res, next) => {
         try {
             const { username, password } = req.body;
             const hashedPassword = await bcrypt.hash(password, 10);
-            const privateKey = await fs.promises.readFile(model.settings.sslKey);
+            const privateKey = await fs.promises.readFile(model.settings.jwtRSAPrivateKeyPath);
+
             if(model.ExistUser(username)){
                 return res.status(409).json({ error: 'User already exists' });
             }
@@ -113,13 +61,13 @@ module.exports = (model) => {
         try {
             const { username, password } = req.body;
             if (!model.ExistUser(username)) {
-                return res.status(401).json({ error: 'Authentication failed' });
+                return res.status(401).json({ error: 'Username/Password does not match.' });
             }
             const passwordMatch = await bcrypt.compare(password, model.GetUserHash(username));
             if (!passwordMatch) {
-                return res.status(401).json({ error: 'Authentication failed' });
+                return res.status(401).json({ error: 'Username/Password does not match.' });
             }
-            const privateKey = await fs.promises.readFile(model.settings.sslKey);
+            const privateKey = await fs.promises.readFile(model.settings.jwtRSAPrivateKeyPath);
             const token = jwt.sign({ userId: username }, privateKey, {
                 expiresIn: '1h',
                 algorithm: 'RS256',
@@ -127,7 +75,7 @@ module.exports = (model) => {
             res.status(200).json({ token });
         } catch (error) {
             console.log(error)
-            res.status(500).json({ error: 'Login failed' });
+            res.status(500).json({ error: 'Login failed for an internal error.' });
         }
     });
     return router;

@@ -95,7 +95,7 @@ function InitTest() {
     if (ExportToFile(configs, generalPath) && ExportToFile(shared, sharedPath) && WriteToFile("The cake is a lie", shared["test1"] + "/test.txt") && WriteToFile("viva la vida", shared["test2"] + "/test.txt")) {
         return true;
     }
-    
+
     return false;
     function ExportToFile(data, path) {
         return WriteToFile(Object.keys(data).map(key => key + "=" + data[key]).join("\n"), path);

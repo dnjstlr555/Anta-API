@@ -13,8 +13,9 @@ module.exports = (model) => {
             return res.redirect('/login');
         }
         try {
-            const publicKey = await fs.promises.readFile(model.settings.sslCert);
+            const publicKey = await fs.promises.readFile(model.settings.jwtRSAPublicKeyPath);
             const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] }); //decoded contains the payloads
+            if(!model.ExistUser(decoded.userId)) return res.redirect('/login');
             return next();
         } catch (error) {
             console.log(error);

@@ -1,17 +1,65 @@
-<html>
-<head>
-<title> Login </title>
-<link rel="StyleSheet" type="text/css" media="all" href="login.css" />
-</head>
-<body>
-<div id="top-image">
+<link rel="stylesheet" type="text/css" href="?resource=css/login.css">
 
-<div class="wrapper">
-
+<div class="login-page">
+    <div class="form">
+        <form action="/signup" method="post" class="register-form">
+            <input type="text" placeholder="name" name="username" />
+            <input type="password" placeholder="password" name="password" />
+            <input type="text" placeholder="email address" name="email" />
+            <button type="submit">create</button>
+            <p class="message">Already registered? <a href="#">Sign In</a></p>
+        </form>
+        <form action="/login" method="post" class="login-form">
+            <input type="text" placeholder="username" name="username" />
+            <input type="password" placeholder="password" name="password" />
+            <button type="submit">login</button>
+            <p class="message">Not registered? <a href="#">Create an account</a></p>
+        </form>
+    </div>
 </div>
-
-</div>
-<script type="text/javascript" src="jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="login.js"></script>
-</body>
-</html>
+<script src="?resource=js/jquery-3.2.1.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('.message a').click(function () {
+            $('form').animate({ height: "toggle", opacity: "toggle" }, "slow");
+        });
+    });
+    document.querySelector('.login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = e.target.querySelector('input[name="username"]').value;
+        const password = e.target.querySelector('input[name="password"]').value;
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json();
+        if (response.status === 200) {
+            document.cookie = 'token=' + data.token;
+            window.location.href = '/';
+        } else {
+            alert(data.error);
+        }
+    });
+    document.querySelector('.register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = e.target.querySelector('input[name="username"]').value;
+        const password = e.target.querySelector('input[name="password"]').value;
+        const response = await fetch('/signup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json();
+        if (response.status === 200) {
+            document.cookie = 'token=' + data.token;
+            window.location.href = '/';
+        } else {
+            alert(data.error);
+        }
+    });
+</script>

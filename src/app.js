@@ -15,7 +15,7 @@ module.exports = (sharedConfigPath="./configs/shared.cfg", generalConfigPath="./
 
     // define middlewares
     const logMiddleware = require('./middlewares/log');
-    const loginMiddleware = require('./middlewares/login')(model);
+    const loginMiddleware = require('./middlewares/login')(model, controller);
     const authMiddleware = require('./middlewares/auth')(model);
 
     // define routers
@@ -25,9 +25,9 @@ module.exports = (sharedConfigPath="./configs/shared.cfg", generalConfigPath="./
 
     const app = model.settings.ssl == true ? http2Express(express) : express(); //use http2 if ssl is enabled
 
-    app.use(express.json()); //use urlencoded middleware for post data
     app.use(express.urlencoded({ extended: true })); //use urlencoded middleware for post data
     app.use(cookieParser()); //use cookie parser middleware
+    app.use(express.json()); //use json middleware for post data
 
     app.use(logMiddleware);
     app.use(loginMiddleware);

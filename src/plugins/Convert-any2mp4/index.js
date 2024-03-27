@@ -6,6 +6,11 @@ module.exports = (model) => {
     const implement = {
         name: "Convert-any2mp4",
         callpath: "tomp4",
+        init: () => {
+            const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+            console.log(ffmpegPath)
+            ffmpeg.setFfmpegPath(ffmpegPath);
+        },
         run: async (req, res, args) => {
             return new Promise(async (resolve, reject) => {
                 //args will be the fake path of the subtitle file. needs to be converted to real path.
@@ -22,8 +27,10 @@ module.exports = (model) => {
                         resolve(true);
                     })
                     .on('error', function(err) {
-                        console.log(err);
-                        resolve(false);
+                        //normally when error happens, resolve false. however we already established the response stream, we send true to avoid establish another response stream.
+                        console.log("Error happened: ", err.message);
+                        res.end();
+                        resolve(true);
                     })
                     .pipe(res, {end:true});
             });

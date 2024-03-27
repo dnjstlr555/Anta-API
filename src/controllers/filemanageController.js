@@ -28,7 +28,6 @@ module.exports = (context, model) => {
         const filePath = path.join(folderPath, file.name);
         const errResult = await mv(filePath);
         if (errResult == undefined) {
-            console.log(req.path);
             res.redirect(req.path);
             return true;
         }
