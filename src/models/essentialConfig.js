@@ -12,4 +12,6 @@ module.exports = {
     fileUploadUseTempFiles:true,
     fileUploadTempDir:"./temp", // If fileUploadUseTempFiles is true, this is the temp directory
     fileUploadLimit:50*1024*1024, // 50MB
+    userDBPath:"./data/user.db",
+    useAuth:false,
 };

@@ -25,7 +25,11 @@ const fs = require('fs');
 
 module.exports = (model, controller) => {
     const router = express.Router();
+    router.get("/favicon.ico", (req, res, next) => {
+        controller.CommonRequestHandlers.SendResource(req, res, "favicon.ico");
+    });
     router.get("/login", (req, res, next) => {
+        if(req.cookies.token) return res.redirect('/');
         const queryKeys = Object.keys(req.query);
         if (queryKeys.includes("resource")) {
             controller.CommonRequestHandlers.SendResource(req, res, req.query.resource);
@@ -37,16 +41,53 @@ module.exports = (model, controller) => {
         res.clearCookie('token');
         res.redirect('/login');
     });
+    router.get("/changepw", async (req, res, next) => {
+        try {
+            const token = req.cookies.token;
+            const publicKey = await fs.promises.readFile(model.settings.jwtRSAPublicKeyPath);
+            const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+            //only can change passwor when the user name is given in the token
+            if (decoded.userId == null || !model.users.ExistUser(decoded.userId)){
+                return res.redirect('/login');
+            }
+        } catch (error) {
+            console.log(error)
+            return res.redirect('/login');
+        }
+        const queryKeys = Object.keys(req.query);
+        if (queryKeys.includes("resource")) {
+            controller.CommonRequestHandlers.SendResource(req, res, req.query.resource);
+            return;
+        }
+        controller.CommonRequestHandlers.SendResource(req, res, "changepw.html");
+    });
+    router.post("/changepw", async (req, res, next) => {
+        try {
+            const { password } = req.body;
+            const token = req.cookies.token;
+            const publicKey = await fs.promises.readFile(model.settings.jwtRSAPublicKeyPath);
+            const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+            const username = decoded.userId;
+            if(!model.users.ExistUser(username)){
+                return res.status(401).json({ error: 'User does not exist' });
+            }
+            const hashedPassword = await bcrypt.hash(password, 10);
+            model.users.ChangeHash(username, hashedPassword);
+            res.status(200).json({ message: 'Password changed successfully' });
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ error: 'Password change failed' });
+        }
+    });
     router.post("/signup", async (req, res, next) => {
         try {
             const { username, password } = req.body;
             const hashedPassword = await bcrypt.hash(password, 10);
             const privateKey = await fs.promises.readFile(model.settings.jwtRSAPrivateKeyPath);
-
-            if(model.ExistUser(username)){
+            if(model.users.ExistUser(username)){
                 return res.status(409).json({ error: 'User already exists' });
             }
-            model.AddUser(username, hashedPassword);
+            model.users.AddUser(username, hashedPassword);
             const token = jwt.sign({ userId: username }, privateKey, {
                 expiresIn: '1h',
                 algorithm: 'RS256',
@@ -60,22 +101,32 @@ module.exports = (model, controller) => {
     router.post("/login", async (req, res, next) => {
         try {
             const { username, password } = req.body;
-            if (!model.ExistUser(username)) {
+            if (!model.users.ExistUser(username)) {
                 return res.status(401).json({ error: 'Username/Password does not match.' });
             }
-            const passwordMatch = await bcrypt.compare(password, model.GetUserHash(username));
+            const hash = model.users.Hash(username);
+            const privateKey = await fs.promises.readFile(model.settings.jwtRSAPrivateKeyPath);
+            if(hash=="") {
+                //if hash is empty, it means the user need to change the password.
+                //give the temporary token and redirect to the change password page
+                const token = jwt.sign({ userId: username, changePW: true }, privateKey, {
+                    expiresIn: '1h',
+                    algorithm: 'RS256',
+                });
+                return res.status(200).json({ token });
+            }
+            const passwordMatch = await bcrypt.compare(password, hash);
             if (!passwordMatch) {
                 return res.status(401).json({ error: 'Username/Password does not match.' });
             }
-            const privateKey = await fs.promises.readFile(model.settings.jwtRSAPrivateKeyPath);
             const token = jwt.sign({ userId: username }, privateKey, {
                 expiresIn: '1h',
                 algorithm: 'RS256',
             });
-            res.status(200).json({ token });
+            return res.status(200).json({ token });
         } catch (error) {
             console.log(error)
-            res.status(500).json({ error: 'Login failed for an internal error.' });
+            return res.status(500).json({ error: 'Login failed for an internal error.' });
         }
     });
     return router;

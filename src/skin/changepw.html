@@ -1,0 +1,36 @@
+<link rel="stylesheet" type="text/css" href="?resource=css/login.css">
+
+<div class="login-page">
+    <div class="form">
+        <form action="/changepw" method="post" class="changepw">
+            <input type="password" placeholder="password" name="password" />
+            <input type="password" placeholder="re-enter password" name="validate" />
+            <button type="submit">CHANGE PASSWORD</button>
+        </form>
+    </div>
+</div>
+<script src="?resource=js/jquery-3.2.1.min.js"></script>
+<script>
+    document.querySelector('.changepw').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = e.target.querySelector('input[name="password"]').value;
+        const validate = e.target.querySelector('input[name="validate"]').value;
+        if (password !== validate) {
+            alert('Password and re-enter password are not the same.');
+            return;
+        }
+        const response = await fetch('/changepw', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password }),
+        });
+        const data = await response.json();
+        if (response.status === 200) {
+            window.location.href = '/';
+        } else {
+            alert(data.error);
+        }
+    });
+</script>

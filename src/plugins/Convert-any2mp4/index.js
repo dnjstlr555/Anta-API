@@ -2,13 +2,12 @@ const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const path = require('path');
 module.exports = (model) => {
-    //It is so working well. I'm so happy.
+    //TODO : mutliple plugin path support in a single file.
     const implement = {
         name: "Convert-any2mp4",
         callpath: "tomp4",
         init: () => {
             const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-            console.log(ffmpegPath)
             ffmpeg.setFfmpegPath(ffmpegPath);
         },
         run: async (req, res, args) => {

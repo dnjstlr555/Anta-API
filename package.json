@@ -3,6 +3,7 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@nodegui/nodegui": "^0.66.0",
     "bcrypt": "^5.1.1",
+    "better-sqlite3": "^9.4.3",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.3",

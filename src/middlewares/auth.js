@@ -15,11 +15,12 @@ module.exports = (model) => {
         try {
             const publicKey = await fs.promises.readFile(model.settings.jwtRSAPublicKeyPath);
             const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] }); //decoded contains the payloads
-            if(!model.ExistUser(decoded.userId)) return res.redirect('/login');
+            if(Object.keys(decoded).includes("changePW") && decoded.changePW) return res.redirect("/changepw");
+            if(!model.users.ExistUser(decoded.userId)) return res.redirect('/login');
             return next();
         } catch (error) {
-            console.log(error);
-            res.status(401).json({ error: 'Invalid token' });
+            res.clearCookie('token');
+            res.redirect('/login');
         }
     });
     return router;

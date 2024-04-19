@@ -8,10 +8,10 @@ const essentialConfig = require('./essentialConfig');
 function ParseConfig(filePath = null) {
     /*
     Parse config entries from the file path
- 
+
     file format:
     [Visible Name]=[Real Path] (newline)
- 
+    
     returns an object in the format:
     {[Visible Name]=[Real Path]}
     */
@@ -41,7 +41,7 @@ function WriteConfig(filePath, config, header = "") {
     fs.writeFileSync(filePath, file);
 }
 function ValidateShared(cfg) {
-    const reservedWords = ["login", "signup", "logout"];
+    const reservedWords = ["login", "signup", "logout", "changepw"];
     const chars = ["\\", "/", "=", "*", "?", "\"", "<", ">", "|"];
     let check = false;
     for (let i in cfg) {
@@ -50,7 +50,7 @@ function ValidateShared(cfg) {
             if (i.includes(j)) check = true;
             break;
         }
-        if (!fs.existsSync(cfg[i]) || !fs.statSync(cfg[i]).isDirectory() || reservedWords.includes(i) || i=="") check = true;
+        if (!fs.existsSync(cfg[i]) || !fs.statSync(cfg[i]).isDirectory() || reservedWords.includes(i) || i == "") check = true;
         if (check) delete cfg[i];
     }
     return cfg;

@@ -3,7 +3,7 @@ const path = require('path');
 const CURRENT_DIR = __dirname.split(/\\|\//).slice(0, -1).join("/");
 const constructs = require('./constructModel');
 const manageConfig = require('./manageConfig');
-
+const userModel = require('./userModel');
 class Model {
     #customModels;
     #users;
@@ -21,6 +21,7 @@ class Model {
         this.#customModels = {}; //Custom models for plugins that can save any data during the server is running
         this.#users = constructs.ConstructUsers();
         this.#loginCerts = constructs.ConstructLoginCerts(this.settings.jwtRSAPublicKeyPath, this.settings.jwtRSAPrivateKeyPath);
+        this.users=new userModel(this.settings.userDBPath);
     }
     get settings() {
         return Object.assign({}, this.#general, { sharedList: this.#shared });
@@ -107,18 +108,6 @@ class Model {
     // User Management
     GetCertKeys() {
         return this.#loginCerts;
-    }
-    GetUserHash(username) {
-        return this.#users[username];
-    }
-    ExistUser(username) {
-        return this.#users[username] != null;
-    }
-    AddUser(username, hashedPassword) {
-        this.#users[username] = hashedPassword;
-    }
-    RemoveUser(username) {
-        delete this.#users[username];
     }
 }
 
