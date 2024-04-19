@@ -5,7 +5,7 @@ const fs = require('fs');
 module.exports = (model) => {
     const router = express.Router();
     router.use(async (req, res, next) => {
-        if (process.env.NODE_ENV === "test") {
+        if (process.env.NODE_ENV === "test" || model.settings.useAuth === false) {
             return next();
         }
         const token = req.cookies.token;

@@ -2,7 +2,6 @@
 Anta is a multi-functional self hosted media streaming service. [Check this demo video](https://www.youtube.com/watch?v=XggPtIFNnFw) / [#2](https://www.youtube.com/watch?v=F4RvdVo_5BM)
 ## Feature 
 - Can provide files and folders from a local machine in the web interface
-- Also using the power of Node.js and modern web browser, can do several useful things
 
 ### Media
 - Supports video, music streaming<br>
@@ -12,14 +11,14 @@ Anta is a multi-functional self hosted media streaming service. [Check this demo
 - Groupwatch feature (sync a video between a host and users, WIP) <br>
 
 ### Web features
-- Responsive UI design<br>
+- Responsive UI design (Mobile, PC)<br>
 - Swipable image viewer<br>
-- File upload and other operations (rename, remove..) (WIP) <br>
+- File upload and other file operations (rename, remove..) (WIP) <br>
 
 ### Specification
 - Works on http2 protocol<br>
-- Authentication (WIP) <br>
-- GUI control of the running server (WIP) <br>
+- User Authentication <br>
+- GUI control of the running server<br>
 
 
 ## Installation 
@@ -31,6 +30,11 @@ will download necessary packages.
 npm run start ./configs/shared.cfg ./configs/general.cfg
 ```
 Finally, this command will start the server and create new configuration files.<br>
+You will see the server managemenet window.<br>
+![GUI Example](./gui.png)<br>
+You can start to share folders by drag n drop folders to the window.<br>
+Finally, navigate to http://localhost<br>
+## Configurations
 at **shared.cfg** you can specify folders to share.
 ```
 #shared.cfg
@@ -52,8 +56,9 @@ startWizard=true #currently do nothing.
 fileUploadUseTempFiles=true #Write files to the drive instead of the memory when user tries to upload files
 fileUploadTempDir=./temp 
 fileUploadLimit=52428800 #Upload limits in bytes
+userDBPath=./data/user.db #Db path for authentication
+useAuth=false #Decide to use authentication or not 
 ```
-Now, restart server again and enter http://localhost.
 
 ## TODO
 [Visit Here For Future Roadmaps](https://oh16.notion.site/ecd578a7359f4fc493272098593cfff7?v=d79ef83ea44e405dbdfa931b7127c5d9&pvs=4)
