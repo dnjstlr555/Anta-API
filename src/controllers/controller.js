@@ -7,8 +7,8 @@ Controller 작동 매커니즘
 유저의 URL 요청 시나리오:
 1. /?resource="js/music.js" : skin으로 지정된 경로에 있는 music.js 파일을 읽어서 반환한다.
 2. /?"<plugin name>"="<something>"&<something2>="<something3>" : plugin을 호출, something
-  ex) /?"convsub"="/mv/koenokatachi.smi"
-  ex) /?"zip"="/mv"
+    ex) /?"convsub"="/mv/koenokatachi.smi"
+    ex) /?"zip"="/mv"
 3. POST /mv : mv 폴더에 전송된 파일을 저장한다.
 4. GET /mv : mv 폴더의 front를 전송한다.
 5. GET /mv?list="ascend" : mv 폴더의 list JSON을 내림차순으로 전송한다.

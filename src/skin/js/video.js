@@ -1,5 +1,6 @@
 var list_subtitle = [];
 var hostid = -1;
+var guestIntvl = -1;
 function video_init(view, name) {
 	hostid = -1;
 	var wrap = doc.getElementById("wrap");
@@ -8,15 +9,31 @@ function video_init(view, name) {
 	//<track kind="captions" label="English captions" src="/path/to/captions.vtt" srclang="en" default>
 	var player_element = doc.createElement("video");
 	player_element.loop = true;
-	player_element.class = "wrap_video";
-	let extIndex = view.lastIndexOf(".") + 1;
-	let ext = view.substring(extIndex, view.length);
-	//if the extension of video is not mp4, use url like /movie?tomp4=video.mp4
-	player_element.src = (ext == "mp4") ? view : `?tomp4=${name}`;
-	console.log(player_element.src);
-	player_element.controls = true;
+	player_element.className = "wrap_video";
+    player_element.controls = true;
 	player_element.autoplay = true;
 	player_element.id = "wrap_video";
+
+	let extIndex = view.lastIndexOf(".") + 1;
+	let ext = view.substring(extIndex, view.length).toLowerCase();
+	const videoSourceUrl = (ext == "mp4") ? view : `?tohls=${name}`;
+	
+    if (ext !== 'mp4' && typeof Hls !== 'undefined' && Hls.isSupported()) {
+        const hls = new Hls({
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            enableWorker: true,
+            fragLoadingTimeOut: 20000, 
+        });
+        
+        hls.loadSource(videoSourceUrl);
+        hls.attachMedia(player_element);
+        window.hls = hls;
+    } else if (player_element.canPlayType('application/vnd.apple.mpegurl')) {
+        player_element.src = videoSourceUrl;
+    } else {
+        player_element.src = videoSourceUrl;
+    }
 
 	let list_subtitle_length = list_subtitle.length;
 	// Plyr does not support choosing same language subtitle. SO I have to make it different.
@@ -44,14 +61,14 @@ function video_init(view, name) {
 	let PartyHost = doc.createElement("button");
 	let PartyGuest = doc.createElement("button");
 	let PartyID = doc.createElement("input");
-	PartyHost.classList = "custom-btn btn-13";
-	PartyGuest.classList = "custom-btn btn-13";
+	PartyHost.className = "custom-btn btn-13";
+	PartyGuest.className = "custom-btn btn-13";
 	PartyHost.innerHTML = "Host";
 	PartyGuest.innerHTML = "Guest";
 	PartyID.type = "text";
 	PartyID.placeholder = "Party ID";
 	PartyHost.onclick = async () => {
-		let id = await fetch(`?party=create`);
+		let id = await fetch(`${view}?party=create`);
 		if (!id.ok) {
 			alert("Failed to create party");
 			return;
@@ -76,6 +93,9 @@ function video_init(view, name) {
 		videoIntvls.push(intvl);
 	}
 	PartyGuest.onclick = async () => {
+        if(guestIntvl!=-1) {
+            //TODO 리스트를 쭉 불러와가지고 그중에 동영상이랑 적합한게 있는지 확인하고 리스트를 유저한테 보여주면서 어떤거를 선택할지 결정하게 하기
+        }
 		let intvl = setInterval(async () => {
 			let slider = doc.getElementById('wrap');
 			let isOpen = slider.classList.contains('slide-in');
@@ -84,14 +104,18 @@ function video_init(view, name) {
 				return;
 			}
 			let roomid = PartyID.value;
-			let result = await fetch(`?party=get&id=${roomid}`);
+			let result = await fetch(`${view}?party=get&id=${roomid}`);
 			if (!result.ok) {
 				alert("Failed to sync");
 				clearInterval(intvl);
 				return;
 			}
 			let resultJson = await result.json();
-			console.log(resultJson)
+			if(resultJson == false) {
+                alert("Failed to sync");
+                clearInterval(intvl);
+                return;
+            }
 			const resultTime = resultJson[0];
 			const resultPaused = resultJson[1];
 			if ((resultPaused) || (!resultPaused && Math.abs(resultTime - player.currentTime) > 1)) {
@@ -101,7 +125,7 @@ function video_init(view, name) {
 				else player.play();
 			}
 		}, 500);
-		videoIntvls.push(intvl);
+		guestIntvl=intvl;
 	}
 	wrap.appendChild(PartyHost);
 	wrap.appendChild(PartyGuest);
@@ -118,6 +142,14 @@ function video_init(view, name) {
 			captions: {
 				language: 'df', update: true
 			},
+            previewThumbnails: {
+                enabled: true,
+                // ?preview=비디오.mkv 로 요청하여 백엔드에서 VTT 텍스트를 받아옵니다.
+                src: `?tohls=${name}&preview=vtt`, 
+            },
+            keyboard: {
+                global: true,
+            }
 		});
 	player.on('error', function (e) {
 		const plyr = e.detail.plyr;

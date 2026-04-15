@@ -34,14 +34,14 @@ module.exports = (model) => {
             5. The plugin will delete the room and return the result.
             */
             const partyModel=model.GetCustomModel("party");
-            const filePath = await model.ConvertPath(decodeURIComponent(req.path));
+            const filePath = await model.ConvertPath(decodeURIComponent(req.originalUrl.split("?")[0]));
             if(filePath==null) {
                 return false;
             }
             const action = req.query.party;
             switch(action) {
                 case "create":
-                    const id = partyModel.CreateParty();
+                    const id = partyModel.CreateParty(filePath);
                     if(id===-1) {
                         return false;
                     }
@@ -58,7 +58,7 @@ module.exports = (model) => {
                     if(req.query.id==undefined) {
                         return false;
                     }
-                    res.json(partyModel.GetPartyTime(req.query.id));
+                    res.json(partyModel.GetPartyTime(req.query.id, filePath));
                     return true;
                 case "close":
                     if(req.query.id==undefined) {

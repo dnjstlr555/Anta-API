@@ -1,14 +1,17 @@
 class Model {
+    // party 
     #party;
     constructor() {
         this.#party = [];
     }
-    CreateParty() {
+    CreateParty(file) {
         const partyid = this.#GeneratePartyId();
         this.#party.push({
             id: partyid,
             time: 0,
-            paused: true
+            paused: true,
+            lastsync: Date.now(),
+            url: file,
         });
         return partyid;
     }
@@ -16,7 +19,10 @@ class Model {
         const partyIds = this.#party.map((party) => party.id);
         //search until a unique id is found
         for(let i=0;i<1000;i++) {
-            const id=i;
+            let id="";
+            for(let j=0;j<5;j++) {
+                id+=String.fromCharCode(Math.floor(Math.random()*26)+97);
+            }
             if(partyIds.indexOf(id)===-1) {
                 return id;
             }
@@ -25,21 +31,37 @@ class Model {
     }
     #GetParty(partyid) {
         //parse the id to integer
-        return this.#party.find((party) => party.id === parseInt(partyid));
+        return this.#party.find((party) => party.id === partyid);
     }
     SetPartyTime(partyid, time, paused) {
         //time is string, convert it to float
+        for(let i=0;i<this.#party.length;i++) {
+            if(this.#party[i].lastsync+1000*60*60*1<Date.now()) {  //1 hour
+                this.DeleteParty(this.#party[i].id);
+            }
+        }
         const party = this.#GetParty(partyid);
         if(party!==undefined) {
             party.time = parseFloat(time);
             party.paused = paused;
+            console.log(party.lastsync);
+            party.lastsync = Date.now();
             return true;
         }
         return false;
     }
-    GetPartyTime(partyid) {
+    GetPartyTime(partyid, file) {
+        for(let i=0;i<this.#party.length;i++) {
+            if(this.#party[i].lastsync+1000*60*60*1<Date.now()) {  //1 hour
+                this.DeleteParty(this.#party[i].id);
+            }
+        }
         const party = this.#GetParty(partyid);
         if(party!==undefined) {
+            console.log(file, party.url)
+            if(party.url!==file) {
+                return false;
+            }
             return [party.time, party.paused];
         }
         return false;

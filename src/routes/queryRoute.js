@@ -4,8 +4,8 @@
 유저의 URL 요청 시나리오:
 1. (여기서구현)/?resource="js/music.js" : skin으로 지정된 경로에 있는 music.js 파일을 읽어서 반환한다. v (완료)
 2. (여기서구현)/?"<plugin name>"="<something>"&<something2>="<something3>" : plugin을 호출, something은 첫번쨰 인자로 나머지 something2, something3등은 필요하면 dict 형태로 두번째 인자로 넘긴다.
-  ex) /?"consub"="/mv/koenokatachi.smi"
-  ex) /?"zip"="/mv"
+    ex) /?"consub"="/mv/koenokatachi.smi"
+    ex) /?"zip"="/mv"
 3. (여기서구현) GET /mv?delete="koenokatachi.smi" : mv 폴더의 koenokatachi.smi 파일을 삭제한다.
 4. (여기서구현) GET /mv?rename="koenokatachi.smi"&to="koe.smi" : mv 폴더의 koenokatachi.smi 파일을 rename한다.
 */
@@ -13,7 +13,26 @@ const express = require("express")
 
 module.exports = (controller) => {
     const router = express.Router()
+    router.use("*", async (req, res, next) => {
+        const result = await controller.HandlePlugin(req, res);
+        if (result[0] == false) {
+            //If the plugin's result is false,  means the plugin has failed or the plugin is not found. Flag the error and continue to next middleware
+            if(result[1]!=404) {
+                FlagError(result[1]);
+                return next();
+            } else {
+                return next();
+            }
+        }
+        return;
+        function FlagError(ErrorCode) {
+            res.locals.ErrorCode = ErrorCode;
+        }
+    });
     router.get("*", async (req, res, next) => {
+        if (IsErrorFlagged()) {
+            return next();
+        }
         const queryKeys = Object.keys(req.query);
         if (queryKeys.length === 0) {
             //If there is no query, continue to static route
@@ -60,14 +79,12 @@ module.exports = (controller) => {
                 return next();
             }
         }
-        const result = await controller.HandlePlugin(req, res);
-        if (result[0] == false) {
-            //If the plugin's result is false,  means the plugin has failed or the plugin is not found. Flag the error and continue to next middleware
-            FlagError(result[1]);
-            return next();
-        } 
-        return;
+        FlagError(404);
+        return next();
         // Helper Functions
+        function IsErrorFlagged() {
+            return res.locals.ErrorCode !== undefined;
+        }
         function FlagError(ErrorCode) {
             res.locals.ErrorCode = ErrorCode;
         }

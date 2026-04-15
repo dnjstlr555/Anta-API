@@ -8,6 +8,21 @@ Controller의 일종이기 때문에 반드시 response를 한 후 종료되어�
 Multiple Plugin Support
 플러그인은 여러개를 한번에 등록할 수 있게 한다.
 
+----
+플러그인의 목적
+1. 쿼리의 수정
+    - 어떠한 경우든 auth를 지난 유효한 접근에 대해서, 특정 메소드로 특정 쿼리 url에 접속했을때 custom 동작이나 response를 할 수 있게끔 한다.
+    - 다만 꼭 query에 한정된다. ex) localhost/file/foo/bar.png?convert O localhost/file/foo/bar.png/convert  X
+2. 플러그인 하나가 여러개의 query를 다룰수 있게 한다.
+    - 현재는 plugin main name, callpath, run, test를 지원한다. (단일)
+    - <새로운 구조>
+    - Plugin Main Name
+        - First Call Path (POST/GET/ALL), (CallPath)
+        - Run (path가 일치하면 1.baseurl을 읽어서 지정된 파일이나 폴더에 어떤 행위를 함 2.아예 무관하게 새로운 행위를 함)
+        - Test
+3. 끄고 킬 필요가 있는 기능을 관리할 수 있게 함
+    - 플러그인으로 관리되면 껏다 키거나 삭제하거나 추가할 수 있음
+4. 스킨의 수정은 알아서 하도록 하게 하자
 */
 const path = require("path");
 const fs = require("fs");
